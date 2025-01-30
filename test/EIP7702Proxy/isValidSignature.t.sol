@@ -6,6 +6,7 @@ import {EIP7702Proxy} from "../../src/EIP7702Proxy.sol";
 import {CoinbaseSmartWallet} from "../../lib/smart-wallet/src/CoinbaseSmartWallet.sol";
 import {ECDSA} from "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 
+/// @review In general I think we should split our tests here between implementation-agnostic invariants the proxy maintains and separate integration tests specific to CoinbaseSmartWallet
 contract IsValidSignatureTest is EIP7702ProxyBase {
     bytes4 constant ERC1271_MAGIC_VALUE = 0x1626ba7e;
     bytes4 constant ERC1271_FAIL_VALUE = 0xffffffff;
@@ -26,16 +27,12 @@ contract IsValidSignatureTest is EIP7702ProxyBase {
         testHash = keccak256("test message");
 
         // Verify owner was set correctly
-        assertTrue(
-            wallet.isOwnerAddress(_newOwner),
-            "New owner should be set after initialization"
-        );
-        assertEq(
-            wallet.ownerAtIndex(0),
-            abi.encode(_newOwner),
-            "Owner at index 0 should be new owner"
-        );
+        assertTrue(wallet.isOwnerAddress(_newOwner), "New owner should be set after initialization");
+        assertEq(wallet.ownerAtIndex(0), abi.encode(_newOwner), "Owner at index 0 should be new owner");
     }
+
+    /// @review add test for calling on uninitialized contract
+    /// @review add test if delegatecall reverts then bubbles up revert data
 
     function testValidContractOwnerSignature() public {
         // Create signature from contract owner
@@ -47,11 +44,7 @@ contract IsValidSignatureTest is EIP7702ProxyBase {
         );
 
         bytes4 result = wallet.isValidSignature(testHash, signature);
-        assertEq(
-            result,
-            ERC1271_MAGIC_VALUE,
-            "Should accept valid contract owner signature"
-        );
+        assertEq(result, ERC1271_MAGIC_VALUE, "Should accept valid contract owner signature");
     }
 
     function testValidEOASignature() public {
@@ -60,11 +53,7 @@ contract IsValidSignatureTest is EIP7702ProxyBase {
         bytes memory signature = abi.encodePacked(r, s, v);
 
         bytes4 result = wallet.isValidSignature(testHash, signature);
-        assertEq(
-            result,
-            ERC1271_MAGIC_VALUE,
-            "Should accept valid EOA signature"
-        );
+        assertEq(result, ERC1271_MAGIC_VALUE, "Should accept valid EOA signature");
     }
 
     function testInvalidEOASignature() public {
@@ -74,39 +63,22 @@ contract IsValidSignatureTest is EIP7702ProxyBase {
         bytes memory signature = abi.encodePacked(r, s, v);
 
         bytes4 result = wallet.isValidSignature(testHash, signature);
-        assertEq(
-            result,
-            ERC1271_FAIL_VALUE,
-            "Should reject invalid EOA signature"
-        );
+        assertEq(result, ERC1271_FAIL_VALUE, "Should reject invalid EOA signature");
     }
 
     function testInvalidOwnerSignature() public {
         // Create a valid format signature but with wrong signer
         uint256 wrongPk = 0xBADBAD; // Different from both EOA and new owner (0xB0B)
-        bytes memory signature = _createOwnerSignature(
-            testHash,
-            address(wallet),
-            wrongPk,
-            0
-        );
+        bytes memory signature = _createOwnerSignature(testHash, address(wallet), wrongPk, 0);
 
         bytes4 result = wallet.isValidSignature(testHash, signature);
-        assertEq(
-            result,
-            ERC1271_FAIL_VALUE,
-            "Should reject signature from non-owner"
-        );
+        assertEq(result, ERC1271_FAIL_VALUE, "Should reject signature from non-owner");
     }
 
     function testEmptySignature() public {
         bytes memory emptySignature = "";
 
         bytes4 result = wallet.isValidSignature(testHash, emptySignature);
-        assertEq(
-            result,
-            ERC1271_FAIL_VALUE,
-            "Should reject empty signature"
-        );
+        assertEq(result, ERC1271_FAIL_VALUE, "Should reject empty signature");
     }
 }
