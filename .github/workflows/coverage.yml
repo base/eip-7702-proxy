@@ -2,9 +2,9 @@ name: Coverage
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 env:
   FOUNDRY_PROFILE: ci
@@ -12,7 +12,7 @@ env:
 jobs:
   coverage:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -23,13 +23,7 @@ jobs:
         with:
           version: nightly
 
-      - name: Run coverage
+      - name: Generate Coverage Report
         run: |
-          forge coverage --report lcov
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./lcov.info
-          fail_ci_if_error: true
+          echo "# Coverage Report" >> $GITHUB_STEP_SUMMARY
+          forge coverage --report summary --ir-minimum >> $GITHUB_STEP_SUMMARY
