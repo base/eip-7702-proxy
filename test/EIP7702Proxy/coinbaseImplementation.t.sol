@@ -167,6 +167,7 @@ contract CoinbaseImplementationTest is Test {
         uint256 amount
     ) public {
         vm.assume(recipient != address(0));
+        vm.assume(recipient != address(_eoa));
         assumeNotPrecompile(recipient);
         assumePayable(recipient);
         vm.assume(amount > 0 && amount <= 100 ether);
@@ -193,6 +194,7 @@ contract CoinbaseImplementationTest is Test {
     ) public {
         vm.assume(nonOwner != address(0));
         vm.assume(nonOwner != _newOwner); // Ensure caller isn't the actual owner
+        vm.assume(nonOwner != _eoa); // Ensure caller isn't the EOA address
 
         address newImpl = address(new CoinbaseSmartWallet());
 

@@ -5,6 +5,7 @@ import {EIP7702ProxyBase} from "../base/EIP7702ProxyBase.sol";
 import {EIP7702Proxy} from "../../src/EIP7702Proxy.sol";
 import {MockImplementation, RevertingInitializerMockImplementation} from "../mocks/MockImplementation.sol";
 import {ECDSA} from "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
+import {ERC1967Utils} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Utils.sol";
 
 contract InitializeTest is EIP7702ProxyBase {
     function test_succeeds_withValidSignatureAndArgs(address newOwner) public {
@@ -156,5 +157,71 @@ contract InitializeTest is EIP7702ProxyBase {
     function test_constructor_reverts_whenInitializerZero() public {
         vm.expectRevert(EIP7702Proxy.ZeroValueConstructorArguments.selector);
         new EIP7702Proxy(address(_implementation), bytes4(0));
+    }
+
+    function test_succeeds_whenImplementationSlotAlreadySetToDifferentAddress(
+        address mockPreviousImpl,
+        address newOwner,
+        uint128 uninitProxyPk
+    ) public {
+        vm.assume(mockPreviousImpl != address(0));
+        vm.assume(mockPreviousImpl != address(_implementation));
+        vm.assume(mockPreviousImpl != address(_eoa));
+        vm.assume(newOwner != address(0));
+        vm.assume(newOwner != mockPreviousImpl);
+        vm.assume(newOwner != _eoa);
+        assumeNotPrecompile(mockPreviousImpl);
+        assumeNotPrecompile(newOwner);
+        vm.assume(uninitProxyPk != 0);
+        vm.assume(uninitProxyPk != _EOA_PRIVATE_KEY);
+
+        // Derive address for uninitProxy from private key
+        address payable uninitProxy = payable(vm.addr(uninitProxyPk));
+
+        // Deploy proxy template and etch its code at the target address
+        EIP7702Proxy proxyTemplate = new EIP7702Proxy(
+            address(_implementation),
+            _initSelector
+        );
+        bytes memory proxyCode = address(proxyTemplate).code;
+        vm.etch(uninitProxy, proxyCode);
+
+        // Set the implementation slot to some other address, simulating a previous implementation
+        vm.store(
+            uninitProxy,
+            ERC1967Utils.IMPLEMENTATION_SLOT,
+            bytes32(uint256(uint160(mockPreviousImpl)))
+        );
+
+        // Verify implementation slot is set to the previous implementation
+        assertEq(
+            _getERC1967Implementation(uninitProxy),
+            mockPreviousImpl,
+            "Implementation slot should be set to previous implementation"
+        );
+
+        // Initialize the proxy
+        bytes memory initArgs = _createInitArgs(_newOwner);
+        bytes32 initHash = keccak256(
+            abi.encode(address(proxyTemplate), initArgs)
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(uninitProxyPk, initHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        EIP7702Proxy(uninitProxy).initialize(initArgs, signature);
+
+        // Verify implementation slot was changed to the correct implementation
+        assertEq(
+            _getERC1967Implementation(uninitProxy),
+            address(_implementation),
+            "Implementation slot should be set to correct implementation"
+        );
+
+        // Verify we can make calls through the proxy now
+        assertEq(
+            MockImplementation(payable(uninitProxy)).owner(),
+            _newOwner,
+            "Should be able to call through proxy after initialization"
+        );
     }
 }
