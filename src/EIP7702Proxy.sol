@@ -71,7 +71,12 @@ contract EIP7702Proxy is Proxy {
         bytes calldata args,
         bytes calldata signature
     ) external {
-        // construct hash incompatible with wallet RPCs to avoid phishing
+        // Construct hash without Ethereum signed message prefix to prevent phishing via standard wallet signing.
+        // Since this proxy is designed for EIP-7702 (where the proxy address is an EOA),
+        // using a raw hash ensures that initialization signatures cannot be obtained through normal
+        // wallet "Sign Message" prompts. This prevents malicious dapps from tricking users into
+        // initializing their account via standard wallet signing flows.
+        // Wallets must implement custom signing logic at a lower level to support initialization.
         bytes32 hash = keccak256(abi.encode(proxy, args));
         address recovered = ECDSA.recover(hash, signature);
         if (recovered != address(this)) revert InvalidSignature();
