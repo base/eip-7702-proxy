@@ -9,4 +9,4 @@
 	url = https://github.com/coinbase/smart-wallet
 [submodule "lib/solady"]
 	path = lib/solady
-	url = https://github.com/vectorized/solady
+	url = https://github.com/transmissions11/solady

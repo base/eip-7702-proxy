@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 import {Proxy} from "openzeppelin-contracts/contracts/proxy/Proxy.sol";
 import {ERC1967Utils} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Utils.sol";
 import {ECDSA} from "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
-import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 import {StorageSlot} from "openzeppelin-contracts/contracts/utils/StorageSlot.sol";
 
 /// @title EIP7702Proxy
@@ -57,7 +56,7 @@ contract EIP7702Proxy is Proxy {
         guardedInitializer = initializer;
     }
 
-    /// @dev Checks if proxy has been initialized by comparing implementation slot
+    /// @dev Checks if proxy has been initialized by checking the initialized flag
     function _isInitialized() internal view returns (bool) {
         return StorageSlot.getBooleanSlot(INITIALIZED_SLOT).value;
     }
