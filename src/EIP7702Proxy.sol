@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import {Proxy} from "openzeppelin-contracts/contracts/proxy/Proxy.sol";
 import {ERC1967Utils} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Utils.sol";
 import {ECDSA} from "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
-import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
+import {StorageSlot} from "openzeppelin-contracts/contracts/utils/StorageSlot.sol";
 
 /// @title EIP7702Proxy
 /// @notice Proxy contract designed for EIP-7702 smart accounts
@@ -24,6 +24,10 @@ contract EIP7702Proxy is Proxy {
     /// @notice Function selector on the implementation that is guarded from direct calls
     bytes4 immutable guardedInitializer;
 
+    /// @dev Storage slot with the initialized flag
+    bytes32 internal constant INITIALIZED_SLOT =
+        bytes32(uint256(keccak256("EIP7702Proxy.initialized")) - 1);
+
     /// @notice Emitted when the implementation is upgraded
     event Upgraded(address indexed implementation);
 
@@ -33,8 +37,8 @@ contract EIP7702Proxy is Proxy {
     /// @notice Emitted when the `guardedInitializer` is called
     error InvalidInitializer();
 
-    /// @notice Emitted when initialization is attempted on a non-initial implementation
-    error InvalidImplementation();
+    /// @notice Emitted when trying to delegate before initialization
+    error ProxyNotInitialized();
 
     /// @notice Emitted when constructor arguments are zero
     error ZeroValueConstructorArguments();
@@ -52,6 +56,11 @@ contract EIP7702Proxy is Proxy {
         guardedInitializer = initializer;
     }
 
+    /// @dev Checks if proxy has been initialized by checking the initialized flag
+    function _isInitialized() internal view returns (bool) {
+        return StorageSlot.getBooleanSlot(INITIALIZED_SLOT).value;
+    }
+
     /// @notice Initializes the proxy and implementation with a signed payload
     ///
     /// @dev Signature must be from this contract's address
@@ -62,17 +71,20 @@ contract EIP7702Proxy is Proxy {
         bytes calldata args,
         bytes calldata signature
     ) external {
-        // construct hash incompatible with wallet RPCs to avoid phishing
+        // Construct hash without Ethereum signed message prefix to prevent phishing via standard wallet signing.
+        // Since this proxy is designed for EIP-7702 (where the proxy address is an EOA),
+        // using a raw hash ensures that initialization signatures cannot be obtained through normal
+        // wallet "Sign Message" prompts. This prevents malicious dapps from tricking users into
+        // initializing their account via standard wallet signing flows.
+        // Wallets must implement custom signing logic at a lower level to support initialization.
         bytes32 hash = keccak256(abi.encode(proxy, args));
         address recovered = ECDSA.recover(hash, signature);
         if (recovered != address(this)) revert InvalidSignature();
 
-        // enforce initialization only on initial implementation
-        address implementation = _implementation();
-        if (implementation != initialImplementation)
-            revert InvalidImplementation();
+        // Set initialized flag before upgrading
+        StorageSlot.getBooleanSlot(INITIALIZED_SLOT).value = true;
 
-        // Set the ERC-1967 implementation slot, emit Upgraded event, call the initializer on the initial implementation
+        // Set the ERC-1967 implementation slot, emit Upgraded event, call the initializer
         ERC1967Utils.upgradeToAndCall(
             initialImplementation,
             abi.encodePacked(guardedInitializer, args)
@@ -91,6 +103,9 @@ contract EIP7702Proxy is Proxy {
         bytes32 hash,
         bytes calldata signature
     ) external returns (bytes4) {
+        // Check initialization status first
+        if (!_isInitialized()) revert ProxyNotInitialized();
+
         // First try delegatecall to implementation
         (bool success, bytes memory result) = _implementation().delegatecall(
             msg.data
@@ -118,21 +133,18 @@ contract EIP7702Proxy is Proxy {
     }
 
     /// @inheritdoc Proxy
-    function _implementation() internal view override returns (address) {
-        address implementation = ERC1967Utils.getImplementation();
-        return
-            implementation != address(0)
-                ? implementation
-                : initialImplementation;
-    }
-
-    /// @inheritdoc Proxy
     /// @dev Handles ERC-1271 signature validation by enforcing an ecrecover check if signatures fail `isValidSignature` check
     /// @dev Guards a specified initializer function from being called directly
     function _fallback() internal override {
+        if (!_isInitialized()) revert ProxyNotInitialized();
+
         // block guarded initializer from being called
         if (msg.sig == guardedInitializer) revert InvalidInitializer();
 
         _delegate(_implementation());
+    }
+
+    function _implementation() internal view override returns (address) {
+        return ERC1967Utils.getImplementation();
     }
 }
