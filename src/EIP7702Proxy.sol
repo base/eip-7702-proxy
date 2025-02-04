@@ -2,50 +2,58 @@
 pragma solidity ^0.8.23;
 
 import {Proxy} from "openzeppelin-contracts/contracts/proxy/Proxy.sol";
-import {ERC1967Utils} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Utils.sol";
 import {ECDSA} from "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 import {StorageSlot} from "openzeppelin-contracts/contracts/utils/StorageSlot.sol";
+import {CustomUpgradeable} from "./CustomUpgradeable.sol";
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 /// @title EIP7702Proxy
 /// @notice Proxy contract designed for EIP-7702 smart accounts
-/// @dev Implements ERC-1967 with an initial implementation address and guarded initializer function
+/// @dev Implements a custom upgradeable proxy pattern with a unique storage slot
+///      to avoid collisions with other delegates in an EIP-7702 context.
 /// @author Coinbase (https://github.com/base-org/eip-7702-proxy)
-contract EIP7702Proxy is Proxy {
-    /// @notice ERC1271 interface constants
+contract EIP7702Proxy is Proxy, CustomUpgradeable {
+    /// @notice ERC1271 interface constants for signature validation
     bytes4 internal constant ERC1271_MAGIC_VALUE = 0x1626ba7e;
     bytes4 internal constant ERC1271_FAIL_VALUE = 0xffffffff;
 
-    /// @notice Address of this proxy contract delegate
+    /// @notice The address of this proxy contract
     address immutable proxy;
 
-    /// @notice Initial implementation address set during construction
+    /// @notice The initial implementation address
     address immutable initialImplementation;
 
-    /// @notice Function selector on the implementation that is guarded from direct calls
+    /// @notice The function selector that is protected from direct calls
     bytes4 immutable guardedInitializer;
 
-    /// @dev Storage slot with the initialized flag, calculated via ERC-7201
+    /// @dev Storage slot for the initialized flag, calculated via ERC-7201
     bytes32 internal constant INITIALIZED_SLOT =
         keccak256(
             abi.encode(uint256(keccak256("EIP7702Proxy.initialized")) - 1)
         ) & ~bytes32(uint256(0xff));
 
-    /// @notice Emitted when the initialization signature is invalid
+    /// @notice Emitted when a signature fails validation during initialization
     error InvalidSignature();
 
-    /// @notice Emitted when the `guardedInitializer` is called
+    /// @notice Emitted when attempting to call the guarded initializer directly
     error InvalidInitializer();
 
-    /// @notice Emitted when trying to delegate before initialization
+    /// @notice Emitted when trying to use the proxy before initialization
     error ProxyNotInitialized();
 
-    /// @notice Emitted when constructor arguments are zero
+    /// @notice Emitted when constructor receives zero address or selector
     error ZeroValueConstructorArguments();
+
+    /// @notice Emitted when an operation is not authorized
+    error Unauthorized();
 
     /// @notice Initializes the proxy with an initial implementation and guarded initializer
     /// @param implementation The initial implementation address
     /// @param initializer The selector of the `guardedInitializer` function
-    constructor(address implementation, bytes4 initializer) {
+    constructor(
+        address implementation,
+        bytes4 initializer
+    ) CustomUpgradeable(implementation, initializer) {
         if (implementation == address(0))
             revert ZeroValueConstructorArguments();
         if (initializer == bytes4(0)) revert ZeroValueConstructorArguments();
@@ -81,11 +89,19 @@ contract EIP7702Proxy is Proxy {
         // Set initialized flag before upgrading
         StorageSlot.getBooleanSlot(INITIALIZED_SLOT).value = true;
 
-        // Set the ERC-1967 implementation slot, emit Upgraded event, call the initializer
-        ERC1967Utils.upgradeToAndCall(
-            initialImplementation,
+        // Update to use our custom implementation storage instead of ERC1967Utils
+        _setImplementation(initialImplementation);
+
+        (bool success, ) = initialImplementation.delegatecall(
             abi.encodePacked(guardedInitializer, args)
         );
+        if (!success) {
+            assembly {
+                let ptr := mload(0x40)
+                returndatacopy(ptr, 0, returndatasize())
+                revert(ptr, returndatasize())
+            }
+        }
     }
 
     /// @notice Handles ERC-1271 signature validation by enforcing a final `ecrecover` check if signatures fail `isValidSignature` check
@@ -142,6 +158,30 @@ contract EIP7702Proxy is Proxy {
     }
 
     function _implementation() internal view override returns (address) {
-        return ERC1967Utils.getImplementation();
+        return _getImplementation();
     }
+
+    function upgradeToAndCall(
+        address newImplementation,
+        bytes memory data,
+        bytes calldata signature
+    ) public payable override {
+        // Create hash of upgrade data
+        bytes32 hash = keccak256(abi.encode(proxy, newImplementation, data));
+
+        // Use our existing isValidSignature logic to validate the upgrade
+        if (this.isValidSignature(hash, signature) != ERC1271_MAGIC_VALUE) {
+            revert Unauthorized();
+        }
+
+        // If signature valid, proceed with upgrade
+        _setImplementation(newImplementation);
+        emit Upgraded(newImplementation);
+
+        if (data.length > 0) {
+            Address.functionDelegateCall(newImplementation, data);
+        }
+    }
+
+    receive() external payable {}
 }
