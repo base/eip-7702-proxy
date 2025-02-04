@@ -163,18 +163,21 @@ contract EIP7702Proxy is Proxy, CustomUpgradeable {
 
     function upgradeToAndCall(
         address newImplementation,
-        bytes memory data,
-        bytes calldata signature
-    ) public payable override {
-        // Create hash of upgrade data
-        bytes32 hash = keccak256(abi.encode(proxy, newImplementation, data));
+        bytes memory data
+    ) public payable {
+        // Check ownership using same logic as _checkOwner
+        (bool success, bytes memory result) = _implementation().delegatecall(
+            abi.encodeWithSignature("isOwnerAddress(address)", msg.sender)
+        );
 
-        // Use our existing isValidSignature logic to validate the upgrade
-        if (this.isValidSignature(hash, signature) != ERC1271_MAGIC_VALUE) {
+        if (
+            !success ||
+            (!abi.decode(result, (bool)) && msg.sender != address(this))
+        ) {
             revert Unauthorized();
         }
 
-        // If signature valid, proceed with upgrade
+        // If sender is owner or contract itself, proceed with upgrade
         _setImplementation(newImplementation);
         emit Upgraded(newImplementation);
 
