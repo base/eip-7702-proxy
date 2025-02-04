@@ -6,6 +6,7 @@ import {console} from "forge-std/console.sol";
 import {CoinbaseSmartWallet} from "../lib/smart-wallet/src/CoinbaseSmartWallet.sol";
 import {EIP7702Proxy} from "../src/EIP7702Proxy.sol";
 import {ECDSA} from "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
+
 /**
  * This script tests an upgraded EOA by verifying ownership and executing an ETH transfer
  *
@@ -19,7 +20,7 @@ import {ECDSA} from "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.s
  *    - PROXY_TEMPLATE_ADDRESS_ODYSSEY: Address of the deployed proxy template on Odyssey
  *
  * Running instructions:
- * 
+ *
  * Local testing:
  * ```bash
  * forge script script/Initialize.s.sol --rpc-url http://localhost:8545 --broadcast --ffi
@@ -33,20 +34,26 @@ import {ECDSA} from "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.s
 contract Initialize is Script {
     // Anvil's default funded accounts (for local testing)
     address constant _ANVIL_EOA = 0x70997970C51812dc3A010C7d01b50e0d17dc79C8;
-    uint256 constant _ANVIL_EOA_PK = 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d;
+    uint256 constant _ANVIL_EOA_PK =
+        0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d;
     // Using another Anvil account as the new owner
-    address constant _ANVIL_NEW_OWNER = 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC;
-    uint256 constant _ANVIL_NEW_OWNER_PK = 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a;
+    address constant _ANVIL_NEW_OWNER =
+        0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC;
+    uint256 constant _ANVIL_NEW_OWNER_PK =
+        0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a;
     // Using the deployer account as recipient for test transactions
-    address constant _ANVIL_DEPLOYER = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
-    uint256 constant _ANVIL_DEPLOYER_PK = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+    address constant _ANVIL_DEPLOYER =
+        0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266;
+    uint256 constant _ANVIL_DEPLOYER_PK =
+        0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
 
     // Chain IDs
     uint256 constant _ANVIL_CHAIN_ID = 31337;
     uint256 constant _ODYSSEY_CHAIN_ID = 911867;
 
     // Deterministic proxy address for Anvil environment
-    address constant _PROXY_ADDRESS_ANVIL = 0x2d95f129bCEbD5cF7f395c7B34106ac1DCfb0CA9;
+    address constant _PROXY_ADDRESS_ANVIL =
+        0x2d95f129bCEbD5cF7f395c7B34106ac1DCfb0CA9;
 
     function run() external {
         // Determine which environment we're in
@@ -84,7 +91,10 @@ contract Initialize is Script {
         console.log("Using proxy template at:", proxyAddr);
 
         // First verify the EOA has code
-        require(address(eoa).code.length > 0, "EOA not upgraded yet! Run UpgradeEOA.s.sol first");
+        require(
+            address(eoa).code.length > 0,
+            "EOA not upgraded yet! Run UpgradeEOA.s.sol first"
+        );
         console.log("[OK] Verified EOA has been upgraded");
 
         // Create and sign the initialize data with just the new owner
@@ -93,9 +103,9 @@ contract Initialize is Script {
         bytes memory initArgs = abi.encode(owners);
         bytes32 initHash = keccak256(abi.encode(proxyAddr, initArgs));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(eoaPk, initHash);
-        
+
         bytes memory initSignature = abi.encodePacked(r, s, v);
-        
+
         // Try to recover ourselves before sending
         address recovered = ECDSA.recover(initHash, initSignature);
         console.log("Recovered:", recovered);
@@ -103,18 +113,20 @@ contract Initialize is Script {
 
         // Start broadcast with EOA's private key to call initialize
         vm.startBroadcast(eoaPk);
-        
+
         // Try to initialize, but handle the case where it's already initialized
         try EIP7702Proxy(payable(eoa)).initialize(initArgs, initSignature) {
             console.log("[OK] Successfully initialized the smart wallet");
         } catch Error(string memory reason) {
             console.log("[INFO] Initialize call reverted with reason:", reason);
         } catch (bytes memory) {
-            console.log("[INFO] Initialization failed: EOA may already have been initialized");
+            console.log(
+                "[INFO] Initialization failed: EOA may already have been initialized"
+            );
         }
 
         vm.stopBroadcast();
-        
+
         // Verify ownership for the new owner
         CoinbaseSmartWallet smartWallet = CoinbaseSmartWallet(payable(eoa));
         bool isNewOwner = smartWallet.isOwnerAddress(newOwner);
@@ -128,13 +140,13 @@ contract Initialize is Script {
         console.log("Deployer balance before:", deployerBalanceBefore);
 
         vm.startBroadcast(newOwnerPk);
-        
+
         // Empty calldata for a simple ETH transfer
         bytes memory callData = "";
         smartWallet.execute(
-            payable(deployer),  // target: sending to the deployer
-            amount,             // value: amount of ETH to send
-            callData           // data: empty for simple ETH transfer
+            payable(deployer), // target: sending to the deployer
+            amount, // value: amount of ETH to send
+            callData // data: empty for simple ETH transfer
         );
 
         uint256 deployerBalanceAfter = deployer.balance;
@@ -147,4 +159,4 @@ contract Initialize is Script {
 
         vm.stopBroadcast();
     }
-} 
+}

@@ -7,3 +7,6 @@
 [submodule "lib/smart-wallet"]
 	path = lib/smart-wallet
 	url = https://github.com/coinbase/smart-wallet
+[submodule "lib/solady"]
+	path = lib/solady
+	url = https://github.com/vectorized/solady
