@@ -144,4 +144,6 @@ contract EIP7702Proxy is Proxy {
     function _implementation() internal view override returns (address) {
         return ERC1967Utils.getImplementation();
     }
+
+    receive() external payable {}
 }
