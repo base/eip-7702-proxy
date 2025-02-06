@@ -51,6 +51,9 @@ contract EIP7702Proxy is Proxy {
     /// @notice Emitted when the implementation is reset
     event ImplementationReset(address newImplementation);
 
+    /// @notice Emitted when caller is not the EOA
+    error UnauthorizedCaller();
+
     /// @notice Initializes the proxy with an initial implementation and guarded initializer
     /// @param implementation The initial implementation address
     /// @param initializer The selector of the `guardedInitializer` function
@@ -164,31 +167,14 @@ contract EIP7702Proxy is Proxy {
     receive() external payable {}
 
     /**
-     * @notice Resets the ERC-1967 implementation slot after signature verification
-     * @dev Uses raw hash (no Ethereum signed message prefix) to prevent phishing
+     * @notice Resets the ERC-1967 implementation slot
+     * @dev Can only be called directly by the EOA (address(this))
      * @param newImplementation The implementation address to set
-     * @param nonce The nonce for this operation (verified against NonceTracker)
-     * @param signature The EOA signature authorizing this change
      */
-    function resetImplementation(
-        address newImplementation,
-        uint256 nonce,
-        bytes calldata signature
-    ) external {
-        // Verify nonce hasn't been used
-        if (
-            !INonceTracker(nonceTracker).verifyAndUseNonce(address(this), nonce)
-        ) {
-            revert NonceAlreadyUsed();
-        }
-
-        // Raw hash without Ethereum signed message prefix
-        bytes32 hash = keccak256(abi.encode(newImplementation, nonce));
-
-        // Verify signature is from this address (the EOA)
-        address recovered = ECDSA.recover(hash, signature);
-        if (recovered != address(this)) {
-            revert InvalidSignature();
+    function resetImplementation(address newImplementation) external {
+        // Verify caller is the EOA
+        if (msg.sender != address(this)) {
+            revert UnauthorizedCaller();
         }
 
         // Reset the implementation slot
