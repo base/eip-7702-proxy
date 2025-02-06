@@ -5,6 +5,7 @@ import {Proxy} from "openzeppelin-contracts/contracts/proxy/Proxy.sol";
 import {ERC1967Utils} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Utils.sol";
 import {ECDSA} from "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 import {StorageSlot} from "openzeppelin-contracts/contracts/utils/StorageSlot.sol";
+import {IERC1271} from "openzeppelin-contracts/contracts/interfaces/IERC1271.sol";
 
 /// @title EIP7702Proxy
 /// @notice Proxy contract designed for EIP-7702 smart accounts
@@ -164,11 +165,11 @@ contract EIP7702Proxy is Proxy {
     receive() external payable {}
 
     /**
-     * @notice Resets the ERC-1967 implementation slot after signature verification
-     * @dev Uses raw hash (no Ethereum signed message prefix) to prevent phishing
+     * @notice Resets the ERC-1967 implementation slot after signature verification from any valid owner
+     * @dev Uses the implementation's isValidSignature to verify owner signatures
      * @param newImplementation The implementation address to set
-     * @param nonce The nonce for this operation (verified against NonceTracker)
-     * @param signature The EOA signature authorizing this change
+     * @param nonce The nonce for this operation
+     * @param signature The SignatureWrapper from any valid owner
      */
     function resetImplementation(
         address newImplementation,
@@ -182,22 +183,43 @@ contract EIP7702Proxy is Proxy {
             revert NonceAlreadyUsed();
         }
 
-        // Raw hash without Ethereum signed message prefix
+        // Hash includes newImplementation and nonce
         bytes32 hash = keccak256(abi.encode(newImplementation, nonce));
 
-        // Verify signature is from this address (the EOA)
-        address recovered = ECDSA.recover(hash, signature);
-        if (recovered != address(this)) {
-            revert InvalidSignature();
-        }
-
-        // Reset the implementation slot
-        ERC1967Utils.upgradeToAndCall(
-            newImplementation,
-            "" // No initialization needed
+        // First try validating against new implementation's isValidSignature
+        (bool success, bytes memory result) = newImplementation.call(
+            abi.encodeWithSelector(
+                IERC1271.isValidSignature.selector,
+                hash,
+                signature
+            )
         );
 
-        emit ImplementationReset(newImplementation);
+        // Check if implementation validation succeeded
+        if (
+            success &&
+            result.length == 32 &&
+            abi.decode(result, (bytes4)) == ERC1271_MAGIC_VALUE
+        ) {
+            // Valid owner signature, proceed with reset
+            ERC1967Utils.upgradeToAndCall(newImplementation, "");
+            emit ImplementationReset(newImplementation);
+            return;
+        }
+
+        // If implementation check failed, try direct EOA signature
+        if (signature.length == 65) {
+            address recovered = ECDSA.recover(hash, signature);
+            if (recovered == address(this)) {
+                // Valid EOA signature, proceed with reset
+                ERC1967Utils.upgradeToAndCall(newImplementation, "");
+                emit ImplementationReset(newImplementation);
+                return;
+            }
+        }
+
+        // If both checks fail, revert
+        revert InvalidSignature();
     }
 }
 
