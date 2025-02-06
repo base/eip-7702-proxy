@@ -42,36 +42,23 @@ contract EIP7702Proxy is Proxy {
     /// @notice Emitted when constructor arguments are zero
     error ZeroValueConstructorArguments();
 
-    /// @notice Emitted when nonce has already been used
-    error NonceAlreadyUsed();
-
-    /// @notice Address of the global nonce tracker for reset operations
-    address public immutable nonceTracker;
+    /// @notice Emitted when caller is not the EOA
+    error UnauthorizedCaller();
 
     /// @notice Emitted when the implementation is reset
     event ImplementationReset(address newImplementation);
 
-    /// @notice Emitted when caller is not the EOA
-    error UnauthorizedCaller();
-
     /// @notice Initializes the proxy with an initial implementation and guarded initializer
     /// @param implementation The initial implementation address
     /// @param initializer The selector of the `guardedInitializer` function
-    /// @param _nonceTracker The address of the global nonce tracker for reset operations
-    constructor(
-        address implementation,
-        bytes4 initializer,
-        address _nonceTracker
-    ) {
+    constructor(address implementation, bytes4 initializer) {
         if (implementation == address(0))
             revert ZeroValueConstructorArguments();
         if (initializer == bytes4(0)) revert ZeroValueConstructorArguments();
-        if (_nonceTracker == address(0)) revert ZeroValueConstructorArguments();
 
         proxy = address(this);
         initialImplementation = implementation;
         guardedInitializer = initializer;
-        nonceTracker = _nonceTracker;
     }
 
     /// @dev Checks if proxy has been initialized by checking the initialized flag
@@ -185,11 +172,4 @@ contract EIP7702Proxy is Proxy {
 
         emit ImplementationReset(newImplementation);
     }
-}
-
-interface INonceTracker {
-    function verifyAndUseNonce(
-        address account,
-        uint256 nonce
-    ) external returns (bool);
 }
