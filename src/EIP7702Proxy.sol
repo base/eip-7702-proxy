@@ -42,17 +42,33 @@ contract EIP7702Proxy is Proxy {
     /// @notice Emitted when constructor arguments are zero
     error ZeroValueConstructorArguments();
 
+    /// @notice Emitted when nonce has already been used
+    error NonceAlreadyUsed();
+
+    /// @notice Address of the global nonce tracker for reset operations
+    address public immutable nonceTracker;
+
+    /// @notice Emitted when the implementation is reset
+    event ImplementationReset(address newImplementation);
+
     /// @notice Initializes the proxy with an initial implementation and guarded initializer
     /// @param implementation The initial implementation address
     /// @param initializer The selector of the `guardedInitializer` function
-    constructor(address implementation, bytes4 initializer) {
+    /// @param _nonceTracker The address of the global nonce tracker for reset operations
+    constructor(
+        address implementation,
+        bytes4 initializer,
+        address _nonceTracker
+    ) {
         if (implementation == address(0))
             revert ZeroValueConstructorArguments();
         if (initializer == bytes4(0)) revert ZeroValueConstructorArguments();
+        if (_nonceTracker == address(0)) revert ZeroValueConstructorArguments();
 
         proxy = address(this);
         initialImplementation = implementation;
         guardedInitializer = initializer;
+        nonceTracker = _nonceTracker;
     }
 
     /// @dev Checks if proxy has been initialized by checking the initialized flag
@@ -146,4 +162,48 @@ contract EIP7702Proxy is Proxy {
     }
 
     receive() external payable {}
+
+    /**
+     * @notice Resets the ERC-1967 implementation slot after signature verification
+     * @dev Uses raw hash (no Ethereum signed message prefix) to prevent phishing
+     * @param newImplementation The implementation address to set
+     * @param nonce The nonce for this operation (verified against NonceTracker)
+     * @param signature The EOA signature authorizing this change
+     */
+    function resetImplementation(
+        address newImplementation,
+        uint256 nonce,
+        bytes calldata signature
+    ) external {
+        // Verify nonce hasn't been used
+        if (
+            !INonceTracker(nonceTracker).verifyAndUseNonce(address(this), nonce)
+        ) {
+            revert NonceAlreadyUsed();
+        }
+
+        // Raw hash without Ethereum signed message prefix
+        bytes32 hash = keccak256(abi.encode(newImplementation, nonce));
+
+        // Verify signature is from this address (the EOA)
+        address recovered = ECDSA.recover(hash, signature);
+        if (recovered != address(this)) {
+            revert InvalidSignature();
+        }
+
+        // Reset the implementation slot
+        ERC1967Utils.upgradeToAndCall(
+            newImplementation,
+            "" // No initialization needed
+        );
+
+        emit ImplementationReset(newImplementation);
+    }
+}
+
+interface INonceTracker {
+    function verifyAndUseNonce(
+        address account,
+        uint256 nonce
+    ) external returns (bool);
 }
