@@ -5,6 +5,7 @@ import {Proxy} from "openzeppelin-contracts/contracts/proxy/Proxy.sol";
 import {ERC1967Utils} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Utils.sol";
 import {ECDSA} from "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 import {StorageSlot} from "openzeppelin-contracts/contracts/utils/StorageSlot.sol";
+import {INonceTracker} from "./interfaces/INonceTracker.sol";
 
 /// @title EIP7702Proxy
 /// @notice Proxy contract designed for EIP-7702 smart accounts
@@ -42,17 +43,30 @@ contract EIP7702Proxy is Proxy {
     /// @notice Emitted when constructor arguments are zero
     error ZeroValueConstructorArguments();
 
+    /// @notice Address of the global nonce tracker for initialization
+    address public immutable nonceTracker;
+
+    /// @notice Error when nonce verification fails
+    error InvalidNonce();
+
     /// @notice Initializes the proxy with an initial implementation and guarded initializer
     /// @param implementation The initial implementation address
     /// @param initializer The selector of the `guardedInitializer` function
-    constructor(address implementation, bytes4 initializer) {
+    /// @param _nonceTracker The address of the nonce tracker contract
+    constructor(
+        address implementation,
+        bytes4 initializer,
+        address _nonceTracker
+    ) {
         if (implementation == address(0))
             revert ZeroValueConstructorArguments();
         if (initializer == bytes4(0)) revert ZeroValueConstructorArguments();
+        if (_nonceTracker == address(0)) revert ZeroValueConstructorArguments();
 
         proxy = address(this);
         initialImplementation = implementation;
         guardedInitializer = initializer;
+        nonceTracker = _nonceTracker;
     }
 
     /// @dev Checks if proxy has been initialized by checking the initialized flag
@@ -70,18 +84,34 @@ contract EIP7702Proxy is Proxy {
         bytes calldata args,
         bytes calldata signature
     ) external {
+        uint256 expectedNonce = INonceTracker(nonceTracker).getNextNonce(
+            address(this)
+        );
+
         // Construct hash without Ethereum signed message prefix to prevent phishing via standard wallet signing.
         // Since this proxy is designed for EIP-7702 (where the proxy address is an EOA),
         // using a raw hash ensures that initialization signatures cannot be obtained through normal
         // wallet "Sign Message" prompts.
-        bytes32 hash = keccak256(abi.encode(proxy, args));
-        address recovered = ECDSA.recover(hash, signature);
-        if (recovered != address(this)) revert InvalidSignature();
+        bytes32 initHash = keccak256(abi.encode(proxy, args, expectedNonce));
+
+        // Verify signature is from the EOA
+        address signer = ECDSA.recover(initHash, signature);
+        if (signer != address(this)) revert InvalidSignature();
+
+        // Verify and consume the nonce
+        if (
+            !INonceTracker(nonceTracker).verifyAndUseNonce(
+                address(this),
+                expectedNonce
+            )
+        ) {
+            revert InvalidNonce();
+        }
 
         // Set initialized flag before upgrading
         StorageSlot.getBooleanSlot(INITIALIZED_SLOT).value = true;
 
-        // Set the ERC-1967 implementation slot, emit Upgraded event, call the initializer
+        // Initialize the implementation
         ERC1967Utils.upgradeToAndCall(
             initialImplementation,
             abi.encodePacked(guardedInitializer, args)
