@@ -7,7 +7,9 @@ import {
   EntryPoint__factory,
   ERC1967Proxy__factory,
   SimpleAccount,
-  SimpleAccount__factory
+  SimpleAccount__factory,
+  SimpleAccountFactory,
+  SimpleAccountFactory__factory
 } from '../typechain'
 import { BytesLike, hexValue } from '@ethersproject/bytes'
 import { TransactionResponse } from '@ethersproject/abstract-provider'
@@ -18,6 +20,7 @@ import { clearInterval } from 'timers'
 import { Create2Factory } from './Create2Factory'
 import { getCreate2Address, hexConcat, Interface, keccak256 } from 'ethers/lib/utils'
 import { HashZero } from '../test/testutils'
+import { getAccountInitCode } from '../test/testutils'
 
 export type SendUserOp = (userOp: UserOperation) => Promise<TransactionResponse | undefined>
 
@@ -199,11 +202,10 @@ export class AAProvider extends BaseProvider {
  */
 export class AASigner extends Signer {
   _account?: SimpleAccount
-
   private _isPhantom = true
   public entryPoint: EntryPoint
-
   private _chainId: Promise<number> | undefined
+  private _accountFactory?: SimpleAccountFactory
 
   /**
    * create account abstraction signer
@@ -212,9 +214,22 @@ export class AASigner extends Signer {
    * @param sendUserOp function to actually send the UserOp to the entryPoint.
    * @param index - index of this account for this signer.
    */
-  constructor (readonly signer: Signer, readonly entryPointAddress: string, readonly sendUserOp: SendUserOp, readonly index = 0, readonly provider = signer.provider) {
+  constructor (
+    readonly signer: Signer,
+    readonly entryPointAddress: string,
+    readonly sendUserOp: SendUserOp,
+    readonly index = 0,
+    readonly provider = signer.provider
+  ) {
     super()
     this.entryPoint = EntryPoint__factory.connect(entryPointAddress, signer)
+  }
+
+  private async getAccountFactory(): Promise<SimpleAccountFactory> {
+    if (!this._accountFactory) {
+      this._accountFactory = await new SimpleAccountFactory__factory(this.signer).deploy(this.entryPointAddress)
+    }
+    return this._accountFactory
   }
 
   // connect to a specific pre-deployed address
@@ -238,12 +253,13 @@ export class AASigner extends Signer {
     return getCreate2Address(Create2Factory.contractAddress, HashZero, keccak256(await this._deploymentTransaction()))
   }
 
-  // TODO TODO: THERE IS UTILS.getAccountInitCode - why not use that?
   async _deploymentTransaction (): Promise<BytesLike> {
-    const implementationAddress = zeroAddress() // TODO: pass implementation in here
-    const ownerAddress = await this.signer.getAddress()
-    const initializeCall = new Interface(SimpleAccount__factory.abi).encodeFunctionData('initialize', [ownerAddress])
-    return new ERC1967Proxy__factory(this.signer).getDeployTransaction(implementationAddress, initializeCall).data!
+    const factory = await this.getAccountFactory()
+    return getAccountInitCode(
+      await this.signer.getAddress(),
+      factory,
+      this.index
+    )
   }
 
   async getAddress (): Promise<string> {
