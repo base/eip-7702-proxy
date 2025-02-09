@@ -6,6 +6,8 @@ import {EIP7702Proxy} from "../../src/EIP7702Proxy.sol";
 import {MockImplementation} from "../mocks/MockImplementation.sol";
 
 contract DelegateTest is EIP7702ProxyBase {
+    bytes4 constant INITIALIZER = MockImplementation.initialize.selector;
+
     function setUp() public override {
         super.setUp();
 
@@ -69,31 +71,6 @@ contract DelegateTest is EIP7702ProxyBase {
         );
     }
 
-    function test_reverts_whenCallingBeforeInitialization() public {
-        // Deploy a fresh proxy without initializing it
-        address payable uninitProxy = payable(makeAddr("uninitProxy"));
-        _deployProxy(uninitProxy);
-
-        vm.expectRevert(EIP7702Proxy.ProxyNotInitialized.selector);
-        MockImplementation(payable(uninitProxy)).owner();
-    }
-
-    function test_reverts_whenCallingWithArbitraryDataBeforeInitialization(
-        bytes memory arbitraryCalldata
-    ) public {
-        // Deploy a fresh proxy without initializing it
-        address payable uninitProxy = payable(makeAddr("uninitProxy"));
-        _deployProxy(uninitProxy);
-
-        // Test that it reverts with the correct error
-        vm.expectRevert(EIP7702Proxy.ProxyNotInitialized.selector);
-        address(uninitProxy).call(arbitraryCalldata);
-
-        // Also verify the low-level call fails
-        (bool success, ) = address(uninitProxy).call(arbitraryCalldata);
-        assertFalse(success, "Low-level call should fail");
-    }
-
     function test_continues_delegating_afterUpgrade() public {
         // Setup will have already initialized the proxy with initial implementation and an owner
 
@@ -123,5 +100,40 @@ contract DelegateTest is EIP7702ProxyBase {
             MockImplementation(_eoa).mockFunctionCalled(),
             "Should be able to call through proxy after upgrade"
         );
+    }
+
+    // Add a specific test for ETH transfers
+    function test_allows_ethTransfersBeforeInitialization() public {
+        // Deploy a fresh proxy without initializing it
+        address payable uninitProxy = payable(makeAddr("uninitProxy"));
+        _deployProxy(uninitProxy);
+
+        // Should succeed with empty calldata and ETH value
+        (bool success, ) = uninitProxy.call{value: 1 ether}("");
+        assertTrue(success, "ETH transfer should succeed");
+        assertEq(address(uninitProxy).balance, 1 ether);
+    }
+
+    function test_reverts_whenCallingWithArbitraryDataBeforeInitialization(
+        bytes calldata data
+    ) public {
+        // Skip empty calls or pure ETH transfers
+        vm.assume(data.length > 0);
+
+        // Deploy a fresh proxy without initializing it
+        address payable uninitProxy = payable(makeAddr("uninitProxy"));
+        _deployProxy(uninitProxy);
+
+        vm.expectRevert(EIP7702Proxy.ProxyNotInitialized.selector);
+        uninitProxy.call(data);
+    }
+
+    function test_reverts_whenCallingBeforeInitialization() public {
+        // Deploy a fresh proxy without initializing it
+        address payable uninitProxy = payable(makeAddr("uninitProxy"));
+        _deployProxy(uninitProxy);
+
+        vm.expectRevert(EIP7702Proxy.ProxyNotInitialized.selector);
+        MockImplementation(payable(uninitProxy)).owner();
     }
 }
