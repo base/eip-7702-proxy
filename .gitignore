@@ -12,3 +12,9 @@ docs/
 
 # Dotenv file
 .env
+
+# Dependency directory
+lib/
+# Keep track of .gitmodules
+!lib/.gitmodules
+

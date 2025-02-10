@@ -1,8 +1,0 @@
-{
-  "recommendations": [
-    "esbenp.prettier-vscode",
-    "juanblanco.solidity",
-    "github.vscode-github-actions",
-    "ryanluker.vscode-coverage-gutters"
-  ]
-}
