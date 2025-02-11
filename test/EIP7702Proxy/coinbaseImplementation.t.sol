@@ -142,7 +142,8 @@ contract CoinbaseImplementationTest is Test {
         // Deploy proxy normally first to get the correct immutable values
         EIP7702Proxy newProxy = new EIP7702Proxy(
             address(implementation),
-            initSelector
+            initSelector,
+            address(nonceTracker)
         );
 
         // Get the proxy's runtime code
