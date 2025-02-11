@@ -27,8 +27,9 @@ contract NonceTrackerTest is Test {
     function test_incrementsNonce_afterVerification() public {
         uint256 nonce = nonceTracker.getNextNonce(account);
 
+        vm.prank(account);
         assertTrue(
-            nonceTracker.verifyAndUseNonce(account, nonce),
+            nonceTracker.verifyAndUseNonce(nonce),
             "Should verify and use nonce"
         );
 
@@ -44,15 +45,17 @@ contract NonceTrackerTest is Test {
 
         vm.expectEmit(true, false, false, true);
         emit NonceUsed(account, nonce);
-        nonceTracker.verifyAndUseNonce(account, nonce);
+        vm.prank(account);
+        nonceTracker.verifyAndUseNonce(nonce);
     }
 
     function test_reverts_whenNonceInvalid(uint256 invalidNonce) public {
         uint256 expectedNonce = nonceTracker.getNextNonce(account);
         vm.assume(invalidNonce != expectedNonce);
 
+        vm.prank(account);
         vm.expectRevert(NonceTracker.InvalidNonce.selector);
-        nonceTracker.verifyAndUseNonce(account, invalidNonce);
+        nonceTracker.verifyAndUseNonce(invalidNonce);
     }
 
     function test_maintainsCorrectNonce_afterMultipleIncrements(
@@ -67,8 +70,9 @@ contract NonceTrackerTest is Test {
                 "Incorrect nonce before increment"
             );
 
+            vm.prank(account);
             assertTrue(
-                nonceTracker.verifyAndUseNonce(account, expectedNonce),
+                nonceTracker.verifyAndUseNonce(expectedNonce),
                 "Should verify and use nonce"
             );
 
@@ -89,7 +93,8 @@ contract NonceTrackerTest is Test {
 
         // Use account's nonce
         uint256 accountNonce = nonceTracker.getNextNonce(account);
-        assertTrue(nonceTracker.verifyAndUseNonce(account, accountNonce));
+        vm.prank(account);
+        assertTrue(nonceTracker.verifyAndUseNonce(accountNonce));
 
         // Other account's nonce should still be 0
         assertEq(
@@ -103,10 +108,32 @@ contract NonceTrackerTest is Test {
         uint256 nonce = nonceTracker.getNextNonce(account);
 
         // Use nonce first time
-        assertTrue(nonceTracker.verifyAndUseNonce(account, nonce));
+        vm.prank(account);
+        assertTrue(nonceTracker.verifyAndUseNonce(nonce));
 
         // Try to reuse same nonce
+        vm.prank(account);
         vm.expectRevert(NonceTracker.InvalidNonce.selector);
-        nonceTracker.verifyAndUseNonce(account, nonce);
+        nonceTracker.verifyAndUseNonce(nonce);
+    }
+
+    function test_reverts_whenCallerNotAccount(address caller) public {
+        vm.assume(caller != account);
+
+        // Get nonces for both accounts
+        uint256 accountNonce = nonceTracker.getNextNonce(account);
+        uint256 callerNonce = nonceTracker.getNextNonce(caller);
+
+        // Use caller's nonce to make sure it's different from account's
+        vm.prank(caller);
+        assertTrue(
+            nonceTracker.verifyAndUseNonce(callerNonce),
+            "Caller should be able to use their own nonce"
+        );
+
+        // Try to use account's nonce from a different address
+        vm.prank(caller);
+        vm.expectRevert(NonceTracker.InvalidNonce.selector);
+        nonceTracker.verifyAndUseNonce(accountNonce);
     }
 }

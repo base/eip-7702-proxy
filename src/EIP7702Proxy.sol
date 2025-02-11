@@ -99,12 +99,7 @@ contract EIP7702Proxy is Proxy {
         if (signer != address(this)) revert InvalidSignature();
 
         // Verify and consume the nonce
-        if (
-            !INonceTracker(nonceTracker).verifyAndUseNonce(
-                address(this),
-                expectedNonce
-            )
-        ) {
+        if (!INonceTracker(nonceTracker).verifyAndUseNonce(expectedNonce)) {
             revert InvalidNonce();
         }
 

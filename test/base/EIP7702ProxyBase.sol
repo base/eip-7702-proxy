@@ -65,7 +65,7 @@ abstract contract EIP7702ProxyBase is Test {
         uint256 signerPk,
         bytes memory initArgs
     ) internal view returns (bytes memory) {
-        uint256 nonce = _nonceTracker.getNextNonce(address(_proxy));
+        uint256 nonce = _nonceTracker.getNextNonce(address(_eoa));
         bytes32 initHash = keccak256(abi.encode(_proxy, initArgs, nonce));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerPk, initHash);
         return abi.encodePacked(r, s, v);

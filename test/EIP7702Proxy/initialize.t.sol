@@ -98,7 +98,7 @@ contract InitializeTest is EIP7702ProxyBase {
             abi.encode(
                 address(proxyTemplate),
                 initArgs,
-                _nonceTracker.getNextNonce(address(proxyTemplate))
+                _nonceTracker.getNextNonce(uninitProxy)
             )
         );
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(uninitProxyPk, initHash);

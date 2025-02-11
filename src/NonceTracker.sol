@@ -16,19 +16,15 @@ contract NonceTracker {
         return nonces[account];
     }
 
-    /// @notice Verify and consume a nonce for an account
+    /// @notice Verify and consume a nonce for the caller
     /// @dev Reverts if nonce doesn't match the next expected value
-    /// @param account The account to verify nonce for
     /// @param nonce The nonce to verify
     /// @return true if nonce was valid and consumed
-    function verifyAndUseNonce(
-        address account,
-        uint256 nonce
-    ) external returns (bool) {
-        if (nonce != nonces[account]) revert InvalidNonce();
+    function verifyAndUseNonce(uint256 nonce) external returns (bool) {
+        if (nonce != nonces[msg.sender]) revert InvalidNonce();
 
-        nonces[account] = nonce + 1;
-        emit NonceUsed(account, nonce);
+        nonces[msg.sender] = nonce + 1;
+        emit NonceUsed(msg.sender, nonce);
         return true;
     }
 }
