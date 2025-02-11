@@ -74,7 +74,9 @@ contract InitializeTest is EIP7702ProxyBase {
         vm.assume(wrongPk != _EOA_PRIVATE_KEY); // Not the valid signer
 
         bytes memory initArgs = _createInitArgs(_newOwner);
-        bytes32 initHash = keccak256(abi.encode(_eoa, initArgs));
+        bytes32 initHash = keccak256(
+            abi.encode(_eoa, initArgs, _nonceTracker.getNextNonce(_eoa))
+        );
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wrongPk, initHash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
@@ -93,7 +95,11 @@ contract InitializeTest is EIP7702ProxyBase {
             .selector;
 
         // Deploy proxy normally first to get the correct immutable values
-        _proxy = new EIP7702Proxy(address(_implementation), _initSelector);
+        _proxy = new EIP7702Proxy(
+            address(_implementation),
+            _initSelector,
+            address(_nonceTracker)
+        );
 
         // Get the proxy's runtime code
         bytes memory proxyCode = address(_proxy).code;
@@ -151,12 +157,20 @@ contract InitializeTest is EIP7702ProxyBase {
 
     function test_constructor_reverts_whenImplementationZero() public {
         vm.expectRevert(EIP7702Proxy.ZeroValueConstructorArguments.selector);
-        new EIP7702Proxy(address(0), MockImplementation.initialize.selector);
+        new EIP7702Proxy(
+            address(0),
+            MockImplementation.initialize.selector,
+            address(_nonceTracker)
+        );
     }
 
     function test_constructor_reverts_whenInitializerZero() public {
         vm.expectRevert(EIP7702Proxy.ZeroValueConstructorArguments.selector);
-        new EIP7702Proxy(address(_implementation), bytes4(0));
+        new EIP7702Proxy(
+            address(_implementation),
+            bytes4(0),
+            address(_nonceTracker)
+        );
     }
 
     function test_succeeds_whenImplementationSlotAlreadySetToDifferentAddress(
@@ -181,7 +195,8 @@ contract InitializeTest is EIP7702ProxyBase {
         // Deploy proxy template and etch its code at the target address
         EIP7702Proxy proxyTemplate = new EIP7702Proxy(
             address(_implementation),
-            _initSelector
+            _initSelector,
+            address(_nonceTracker)
         );
         bytes memory proxyCode = address(proxyTemplate).code;
         vm.etch(uninitProxy, proxyCode);
@@ -203,7 +218,11 @@ contract InitializeTest is EIP7702ProxyBase {
         // Initialize the proxy
         bytes memory initArgs = _createInitArgs(_newOwner);
         bytes32 initHash = keccak256(
-            abi.encode(address(proxyTemplate), initArgs)
+            abi.encode(
+                address(proxyTemplate),
+                initArgs,
+                _nonceTracker.getNextNonce(address(proxyTemplate))
+            )
         );
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(uninitProxyPk, initHash);
         bytes memory signature = abi.encodePacked(r, s, v);

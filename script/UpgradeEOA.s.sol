@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/console.sol";
 import {EIP7702Proxy} from "../src/EIP7702Proxy.sol";
+import {NonceTracker} from "../src/NonceTracker.sol";
 import {CoinbaseSmartWallet} from "../lib/smart-wallet/src/CoinbaseSmartWallet.sol";
 import {Strings} from "openzeppelin-contracts/contracts/utils/Strings.sol";
 
@@ -99,8 +100,9 @@ contract UpgradeEOA is Script {
         // when mixing broadcast and FFI in Foundry.
         vm.startBroadcast(deployerPk);
 
-        // 1. Deploy implementation contract
+        // 1. Deploy implementation contract and nonce tracker
         CoinbaseSmartWallet implementation = new CoinbaseSmartWallet();
+        NonceTracker nonceTracker = new NonceTracker();
         console.log("Implementation deployed at:", address(implementation));
 
         // 2. Deploy proxy contract with create2 for deterministic address
@@ -108,7 +110,8 @@ contract UpgradeEOA is Script {
         bytes32 salt = bytes32(0); // We can use 0 as salt since we only need one deployment
         proxy = new EIP7702Proxy{salt: salt}(
             address(implementation),
-            initSelector
+            initSelector,
+            address(nonceTracker)
         );
         console.log("Proxy deployed at:", address(proxy));
 
