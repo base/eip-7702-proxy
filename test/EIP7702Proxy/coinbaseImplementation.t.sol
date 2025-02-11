@@ -27,7 +27,7 @@ contract CoinbaseImplementationTest is Test {
     bytes4 constant ERC1271_MAGIC_VALUE = 0x1626ba7e;
     bytes4 constant ERC1271_FAIL_VALUE = 0xffffffff;
 
-    function setUp() public {
+    function setUp() public virtual {
         // Set up test accounts
         _eoa = payable(vm.addr(_EOA_PRIVATE_KEY));
         _newOwner = payable(vm.addr(_NEW_OWNER_PRIVATE_KEY));
@@ -132,6 +132,24 @@ contract CoinbaseImplementationTest is Test {
             abi.encode(
                 CoinbaseSmartWallet.SignatureWrapper(ownerIndex, signatureData)
             );
+    }
+
+    /**
+     * @dev Helper to deploy a proxy and etch its code at a target address
+     * @param target The address where the proxy code should be etched
+     */
+    function _deployProxy(address target) internal {
+        // Deploy proxy normally first to get the correct immutable values
+        EIP7702Proxy newProxy = new EIP7702Proxy(
+            address(implementation),
+            initSelector
+        );
+
+        // Get the proxy's runtime code
+        bytes memory proxyCode = address(newProxy).code;
+
+        // Etch the proxy code at the target address
+        vm.etch(target, proxyCode);
     }
 
     // ======== Tests ========

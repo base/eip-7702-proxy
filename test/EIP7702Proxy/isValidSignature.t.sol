@@ -120,19 +120,6 @@ contract FailingImplementationTest is IsValidSignatureTestBase {
         );
         assertEq(result, ERC1271_FAIL_VALUE, "Should reject empty signature");
     }
-
-    function test_reverts_whenCalledBeforeInitialization() public {
-        // Deploy a fresh proxy without initializing
-        address payable uninitProxy = payable(makeAddr("uninitProxy"));
-        _deployProxy(uninitProxy);
-
-        // Try to call isValidSignature
-        bytes32 hash = keccak256("test message");
-        bytes memory signature = new bytes(65);
-
-        vm.expectRevert(EIP7702Proxy.ProxyNotInitialized.selector);
-        EIP7702Proxy(uninitProxy).isValidSignature(hash, signature);
-    }
 }
 
 /**

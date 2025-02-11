@@ -28,12 +28,6 @@ contract EIP7702Proxy is Proxy {
     /// @notice Address of the global nonce tracker for initialization
     address public immutable nonceTracker;
 
-    /// @dev Storage slot with the initialized flag, calculated via ERC-7201
-    bytes32 internal constant INITIALIZED_SLOT =
-        keccak256(
-            abi.encode(uint256(keccak256("EIP7702Proxy.initialized")) - 1)
-        ) & ~bytes32(uint256(0xff));
-
     /// @notice Emitted when the initialization signature is invalid
     error InvalidSignature();
 
@@ -69,11 +63,6 @@ contract EIP7702Proxy is Proxy {
         nonceTracker = _nonceTracker;
     }
 
-    /// @dev Checks if proxy has been initialized by checking the initialized flag
-    function _isInitialized() internal view returns (bool) {
-        return StorageSlot.getBooleanSlot(INITIALIZED_SLOT).value;
-    }
-
     /// @notice Initializes the proxy and implementation with a signed payload
     ///
     /// @dev Signature must be from this contract's address
@@ -103,10 +92,7 @@ contract EIP7702Proxy is Proxy {
             revert InvalidNonce();
         }
 
-        // Set initialized flag before upgrading
-        StorageSlot.getBooleanSlot(INITIALIZED_SLOT).value = true;
-
-        // Initialize the implementation
+        // Set the ERC-1967 implementation slot, emit Upgraded event, call the initializer
         ERC1967Utils.upgradeToAndCall(
             initialImplementation,
             abi.encodePacked(guardedInitializer, args)
@@ -125,9 +111,6 @@ contract EIP7702Proxy is Proxy {
         bytes32 hash,
         bytes calldata signature
     ) external returns (bytes4) {
-        // Check initialization status first
-        if (!_isInitialized()) revert ProxyNotInitialized();
-
         // First try delegatecall to implementation
         (bool success, bytes memory result) = _implementation().delegatecall(
             msg.data
@@ -158,15 +141,17 @@ contract EIP7702Proxy is Proxy {
     /// @dev Handles ERC-1271 signature validation by enforcing an ecrecover check if signatures fail `isValidSignature` check
     /// @dev Guards a specified initializer function from being called directly
     function _fallback() internal override {
-        if (!_isInitialized()) revert ProxyNotInitialized();
-
         // block guarded initializer from being called
         if (msg.sig == guardedInitializer) revert InvalidInitializer();
 
         _delegate(_implementation());
     }
 
+    /// @notice Returns the implementation address, falling back to the initial implementation if the ERC-1967 implementation slot is not set
+    /// @return The implementation address
     function _implementation() internal view override returns (address) {
+        if (ERC1967Utils.getImplementation() == address(0))
+            return initialImplementation;
         return ERC1967Utils.getImplementation();
     }
 

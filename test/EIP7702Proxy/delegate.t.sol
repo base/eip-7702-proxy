@@ -127,13 +127,4 @@ contract DelegateTest is EIP7702ProxyBase {
         vm.expectRevert(EIP7702Proxy.ProxyNotInitialized.selector);
         uninitProxy.call(data);
     }
-
-    function test_reverts_whenCallingBeforeInitialization() public {
-        // Deploy a fresh proxy without initializing it
-        address payable uninitProxy = payable(makeAddr("uninitProxy"));
-        _deployProxy(uninitProxy);
-
-        vm.expectRevert(EIP7702Proxy.ProxyNotInitialized.selector);
-        MockImplementation(payable(uninitProxy)).owner();
-    }
 }
