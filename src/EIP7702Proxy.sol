@@ -77,18 +77,15 @@ contract EIP7702Proxy is Proxy {
             address(this)
         );
 
-        // Construct hash without Ethereum signed message prefix to prevent phishing via standard wallet signing.
-        // Since this proxy is designed for EIP-7702 (where the proxy address is an EOA),
-        // using a raw hash ensures that initialization signatures cannot be obtained through normal
-        // wallet "Sign Message" prompts.
-        bytes32 initHash = keccak256(abi.encode(proxy, args, expectedNonce));
-
-        // Verify signature is from the EOA
-        address signer = ECDSA.recover(initHash, signature);
-        if (signer != address(this)) revert InvalidSignature();
-
         // Verify and consume the nonce
-        if (!INonceTracker(nonceTracker).verifyAndUseNonce(expectedNonce)) {
+        if (
+            !INonceTracker(nonceTracker).verifyAndUseNonce(
+                proxy,
+                args,
+                expectedNonce,
+                signature
+            )
+        ) {
             revert InvalidNonce();
         }
 
