@@ -50,6 +50,93 @@ contract InitializeTest is EIP7702ProxyBase {
         EIP7702Proxy(_eoa).initialize(initArgs, signature);
     }
 
+    function test_succeeds_whenImplementationSlotAlreadySetToDifferentAddress(
+        address mockPreviousImpl,
+        address newOwner,
+        uint128 uninitProxyPk
+    ) public {
+        vm.assume(mockPreviousImpl != address(0));
+        vm.assume(mockPreviousImpl != address(_implementation));
+        vm.assume(mockPreviousImpl != address(_eoa));
+        vm.assume(newOwner != address(0));
+        vm.assume(newOwner != mockPreviousImpl);
+        vm.assume(newOwner != _eoa);
+        assumeNotPrecompile(mockPreviousImpl);
+        assumeNotPrecompile(newOwner);
+        vm.assume(uninitProxyPk != 0);
+        vm.assume(uninitProxyPk != _EOA_PRIVATE_KEY);
+
+        // Derive address for uninitProxy from private key
+        address payable uninitProxy = payable(vm.addr(uninitProxyPk));
+
+        // Deploy proxy template and etch its code at the target address
+        EIP7702Proxy proxyTemplate = new EIP7702Proxy(
+            address(_implementation),
+            _initSelector,
+            address(_nonceTracker)
+        );
+        bytes memory proxyCode = address(proxyTemplate).code;
+        vm.etch(uninitProxy, proxyCode);
+
+        // Set the implementation slot to some other address, simulating a previous implementation
+        vm.store(
+            uninitProxy,
+            ERC1967Utils.IMPLEMENTATION_SLOT,
+            bytes32(uint256(uint160(mockPreviousImpl)))
+        );
+
+        // Verify implementation slot is set to the previous implementation
+        assertEq(
+            _getERC1967Implementation(uninitProxy),
+            mockPreviousImpl,
+            "Implementation slot should be set to previous implementation"
+        );
+
+        // Initialize the proxy
+        bytes memory initArgs = _createInitArgs(_newOwner);
+        bytes32 initHash = keccak256(
+            abi.encode(
+                address(proxyTemplate),
+                initArgs,
+                _nonceTracker.getNextNonce(address(proxyTemplate))
+            )
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(uninitProxyPk, initHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        EIP7702Proxy(uninitProxy).initialize(initArgs, signature);
+
+        // Verify implementation slot was changed to the correct implementation
+        assertEq(
+            _getERC1967Implementation(uninitProxy),
+            address(_implementation),
+            "Implementation slot should be set to correct implementation"
+        );
+
+        // Verify we can make calls through the proxy now
+        assertEq(
+            MockImplementation(payable(uninitProxy)).owner(),
+            _newOwner,
+            "Should be able to call through proxy after initialization"
+        );
+    }
+
+    function test_nonceIncrements_afterSuccessfulInitialization() public {
+        uint256 initialNonce = _nonceTracker.getNextNonce(_eoa);
+
+        // Perform initialization
+        bytes memory initArgs = _createInitArgs(_newOwner);
+        bytes memory signature = _signInitData(_EOA_PRIVATE_KEY, initArgs);
+        EIP7702Proxy(_eoa).initialize(initArgs, signature);
+
+        uint256 newNonce = _nonceTracker.getNextNonce(_eoa);
+        assertEq(
+            newNonce,
+            initialNonce + 1,
+            "Nonce should increment after successful initialization"
+        );
+    }
+
     function test_reverts_whenSignatureLengthInvalid(address newOwner) public {
         bytes memory initArgs = _createInitArgs(newOwner);
         bytes memory signature = hex"deadbeef"; // Too short to be valid ECDSA signature
@@ -155,6 +242,33 @@ contract InitializeTest is EIP7702ProxyBase {
         EIP7702Proxy(_eoa).initialize(differentArgs, signature);
     }
 
+    function test_reverts_whenSignatureUsesWrongNonce() public {
+        // Get current nonce
+        uint256 currentNonce = _nonceTracker.getNextNonce(_eoa);
+
+        // Create signature with wrong (future) nonce
+        bytes memory initArgs = _createInitArgs(_newOwner);
+        bytes32 initHash = keccak256(
+            abi.encode(_proxy, initArgs, currentNonce + 1)
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(_EOA_PRIVATE_KEY, initHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        vm.expectRevert(EIP7702Proxy.InvalidSignature.selector);
+        EIP7702Proxy(_eoa).initialize(initArgs, signature);
+    }
+
+    function test_reverts_whenSignatureReplayedWithSameNonce() public {
+        // First initialization
+        bytes memory initArgs = _createInitArgs(_newOwner);
+        bytes memory signature = _signInitData(_EOA_PRIVATE_KEY, initArgs);
+        EIP7702Proxy(_eoa).initialize(initArgs, signature);
+
+        // Try to replay the same signature
+        vm.expectRevert(EIP7702Proxy.InvalidSignature.selector);
+        EIP7702Proxy(_eoa).initialize(initArgs, signature);
+    }
+
     function test_constructor_reverts_whenImplementationZero() public {
         vm.expectRevert(EIP7702Proxy.ZeroValueConstructorArguments.selector);
         new EIP7702Proxy(
@@ -173,74 +287,8 @@ contract InitializeTest is EIP7702ProxyBase {
         );
     }
 
-    function test_succeeds_whenImplementationSlotAlreadySetToDifferentAddress(
-        address mockPreviousImpl,
-        address newOwner,
-        uint128 uninitProxyPk
-    ) public {
-        vm.assume(mockPreviousImpl != address(0));
-        vm.assume(mockPreviousImpl != address(_implementation));
-        vm.assume(mockPreviousImpl != address(_eoa));
-        vm.assume(newOwner != address(0));
-        vm.assume(newOwner != mockPreviousImpl);
-        vm.assume(newOwner != _eoa);
-        assumeNotPrecompile(mockPreviousImpl);
-        assumeNotPrecompile(newOwner);
-        vm.assume(uninitProxyPk != 0);
-        vm.assume(uninitProxyPk != _EOA_PRIVATE_KEY);
-
-        // Derive address for uninitProxy from private key
-        address payable uninitProxy = payable(vm.addr(uninitProxyPk));
-
-        // Deploy proxy template and etch its code at the target address
-        EIP7702Proxy proxyTemplate = new EIP7702Proxy(
-            address(_implementation),
-            _initSelector,
-            address(_nonceTracker)
-        );
-        bytes memory proxyCode = address(proxyTemplate).code;
-        vm.etch(uninitProxy, proxyCode);
-
-        // Set the implementation slot to some other address, simulating a previous implementation
-        vm.store(
-            uninitProxy,
-            ERC1967Utils.IMPLEMENTATION_SLOT,
-            bytes32(uint256(uint160(mockPreviousImpl)))
-        );
-
-        // Verify implementation slot is set to the previous implementation
-        assertEq(
-            _getERC1967Implementation(uninitProxy),
-            mockPreviousImpl,
-            "Implementation slot should be set to previous implementation"
-        );
-
-        // Initialize the proxy
-        bytes memory initArgs = _createInitArgs(_newOwner);
-        bytes32 initHash = keccak256(
-            abi.encode(
-                address(proxyTemplate),
-                initArgs,
-                _nonceTracker.getNextNonce(address(proxyTemplate))
-            )
-        );
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(uninitProxyPk, initHash);
-        bytes memory signature = abi.encodePacked(r, s, v);
-
-        EIP7702Proxy(uninitProxy).initialize(initArgs, signature);
-
-        // Verify implementation slot was changed to the correct implementation
-        assertEq(
-            _getERC1967Implementation(uninitProxy),
-            address(_implementation),
-            "Implementation slot should be set to correct implementation"
-        );
-
-        // Verify we can make calls through the proxy now
-        assertEq(
-            MockImplementation(payable(uninitProxy)).owner(),
-            _newOwner,
-            "Should be able to call through proxy after initialization"
-        );
+    function test_reverts_whenNonceTrackerAddressZero() public {
+        vm.expectRevert(EIP7702Proxy.ZeroValueConstructorArguments.selector);
+        new EIP7702Proxy(address(_implementation), _initSelector, address(0));
     }
 }
