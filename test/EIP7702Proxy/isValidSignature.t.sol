@@ -78,7 +78,6 @@ abstract contract IsValidSignatureTestBase is EIP7702ProxyBase {
  */
 contract FailingImplementationTest is IsValidSignatureTestBase {
     function setUp() public override {
-        // Add super.setUp() first to initialize _nonceTracker
         super.setUp();
 
         // Override base setup to use FailingSignatureImplementation
@@ -141,7 +140,6 @@ contract FailingImplementationTest is IsValidSignatureTestBase {
  */
 contract SucceedingImplementationTest is IsValidSignatureTestBase {
     function setUp() public override {
-        // Add super.setUp() first to initialize _nonceTracker
         super.setUp();
 
         // Override base implementation with standard MockImplementation (always succeeds)
@@ -195,7 +193,6 @@ contract SucceedingImplementationTest is IsValidSignatureTestBase {
  */
 contract RevertingImplementationTest is IsValidSignatureTestBase {
     function setUp() public override {
-        // Add super.setUp() first to initialize _nonceTracker
         super.setUp();
 
         // Override base setup to use RevertingIsValidSignatureImplementation

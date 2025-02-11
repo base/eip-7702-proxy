@@ -25,6 +25,9 @@ contract EIP7702Proxy is Proxy {
     /// @notice Function selector on the implementation that is guarded from direct calls
     bytes4 immutable guardedInitializer;
 
+    /// @notice Address of the global nonce tracker for initialization
+    address public immutable nonceTracker;
+
     /// @dev Storage slot with the initialized flag, calculated via ERC-7201
     bytes32 internal constant INITIALIZED_SLOT =
         keccak256(
@@ -42,9 +45,6 @@ contract EIP7702Proxy is Proxy {
 
     /// @notice Emitted when constructor arguments are zero
     error ZeroValueConstructorArguments();
-
-    /// @notice Address of the global nonce tracker for initialization
-    address public immutable nonceTracker;
 
     /// @notice Error when nonce verification fails
     error InvalidNonce();
