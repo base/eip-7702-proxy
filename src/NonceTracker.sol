@@ -33,11 +33,11 @@ contract NonceTracker {
     ///
     /// @return true if nonce was valid and consumed
     function verifyAndUseNonce(uint256 nonce) external returns (bool) {
-        if (nonce != _nonces[msg.sender])
-            revert InvalidNonce(_nonces[msg.sender], nonce);
+        if (nonce != _nonces[msg.sender]) revert InvalidNonce(_nonces[msg.sender], nonce);
 
         _nonces[msg.sender] = nonce + 1;
         emit NonceUsed(msg.sender, nonce);
+        /// @review do we need a return if we're not using it and this reverts on failure anyways?
         return true;
     }
 }
