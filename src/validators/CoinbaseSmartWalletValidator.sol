@@ -1,24 +1,21 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {IWalletValidator} from "../interfaces/IWalletValidator.sol";
 import {MultiOwnable} from "smart-wallet/MultiOwnable.sol";
 
+import {IAccountStateValidator} from "../interfaces/IAccountStateValidator.sol";
+
 /// @title CoinbaseSmartWalletValidator
-/// @notice Validates Coinbase Smart Wallet specific invariants
-contract CoinbaseSmartWalletValidator is IWalletValidator {
-    /// @notice Error thrown when a wallet has no owners
+///
+/// @notice Validates account state against invariants specific to CoinbaseSmartWallet
+contract CoinbaseSmartWalletValidator is IAccountStateValidator {
+    /// @notice Error thrown when an account has no nextOwnerIndex
     error Unintialized();
 
-    /// @notice Validates that a Coinbase Smart Wallet has at least one owner
-    /// @param wallet The address of the wallet to validate
-    function validateWalletState(address wallet) external view override {
-        // Cast to MultiOwnable to check owner count
-        MultiOwnable walletContract = MultiOwnable(wallet);
-
-        // Ensure at least one owner exists
-        if (walletContract.nextOwnerIndex() == 0) {
-            revert Unintialized();
-        }
+    /// @inheritdoc IAccountStateValidator
+    ///
+    /// @dev Mimics the exact logic used in `CoinbaseSmartWallet.initialize` for consistency
+    function validateAccountState(address account) external view override {
+        if (MultiOwnable(account).nextOwnerIndex() == 0) revert Unintialized();
     }
 }

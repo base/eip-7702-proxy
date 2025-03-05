@@ -1,13 +1,11 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
 /// @title NonceTracker
 ///
-/// @notice A separate storage contract for securely tracking nonces for EIP-7702 proxies.
+/// @notice A singleton contract for EIP-7702 accounts to manage nonces for ERC-1967 implementation overrides
 ///
-/// @dev This contract is used to track nonces for EIP-7702 proxies. It is separate from the storage location
-///      of the 7702 account itself to prevent the nonce from being tampered with by other arbitrary delegates
-///      of the account.
+/// @dev Separating nonce storage from EIP-7702 accounts mitigates other arbitrary delegates from unexpectedly reversing state
 ///
 /// @author Coinbase (https://github.com/base/eip-7702-proxy)
 contract NonceTracker {
