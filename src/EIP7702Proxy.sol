@@ -44,18 +44,18 @@ contract EIP7702Proxy is Proxy {
 
     /// @notice Initializes the proxy with a default receiver implementation and nonce tracker
     ///
-    /// @param nonceTracker The address of the nonce tracker contract
-    /// @param receiver The address of the receiver contract
-    constructor(NonceTracker nonceTracker, Receiver receiver) {
-        if (address(receiver) == address(0)) {
+    /// @param nonceTracker_ The address of the nonce tracker contract
+    /// @param receiver_ The address of the receiver contract
+    constructor(NonceTracker nonceTracker_, Receiver receiver_) {
+        if (address(receiver_) == address(0)) {
             revert ZeroValueConstructorArguments();
         }
-        if (address(nonceTracker) == address(0)) {
+        if (address(nonceTracker_) == address(0)) {
             revert ZeroValueConstructorArguments();
         }
 
-        nonceTracker = nonceTracker;
-        receiver = receiver;
+        nonceTracker = nonceTracker_;
+        receiver = receiver_;
         _proxy = address(this);
     }
 
