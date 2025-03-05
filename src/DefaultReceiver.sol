@@ -7,7 +7,7 @@ import {Receiver} from "solady/accounts/Receiver.sol";
 ///
 /// @notice Accepts native, ERC-721, and ERC-1155 token transfers
 ///
-/// @dev Simple inherits Solady, providing all necessary functionality:
+/// @dev Simply inherits Solady abstract Receiver, providing all necessary functionality:
 ///      - receive() for native token
 ///      - fallback() with receiverFallback modifier for ERC-721 and ERC-1155
 ///      - _useReceiverFallbackBody() returns true

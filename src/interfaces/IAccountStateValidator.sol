@@ -9,7 +9,7 @@ pragma solidity ^0.8.23;
 ///
 /// @author Coinbase (https://github.com/base/eip-7702-proxy)
 interface IAccountStateValidator {
-    /// @notice Validates that a account is in a valid state
+    /// @notice Validates that an account is in a valid state
     ///
     /// @dev Should revert if account state is invalid
     ///
