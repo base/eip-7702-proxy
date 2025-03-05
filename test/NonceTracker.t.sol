@@ -16,7 +16,7 @@ contract NonceTrackerTest is Test {
         account = vm.addr(ACCOUNT_PK);
     }
 
-    function test_nonces_initialNonceIsZero() public {
+    function test_nonces_initialNonceIsZero() public view {
         assertEq(nonceTracker.nonces(account), 0, "Initial nonce should be zero");
     }
 
@@ -56,7 +56,6 @@ contract NonceTrackerTest is Test {
         vm.assume(otherAccount != account);
 
         // Use account's nonce
-        uint256 accountNonce = nonceTracker.nonces(account);
         vm.prank(account);
         nonceTracker.useNonce();
 

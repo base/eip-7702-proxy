@@ -1,21 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-import {IWalletValidator} from "../../src/interfaces/IWalletValidator.sol";
+import {IAccountStateValidator} from "../../src/interfaces/IAccountStateValidator.sol";
 import {MockImplementation} from "./MockImplementation.sol";
 
-/**
- * @title MockRevertingValidator
- * @dev Mock validator that always reverts
- */
-contract MockRevertingValidator is IWalletValidator {
+/// @title MockRevertingValidator
+/// @dev Mock validator that always reverts
+contract MockRevertingValidator is IAccountStateValidator {
     error AlwaysReverts();
 
-    /**
-     * @dev Reverts
-     * @param wallet Address of the wallet to validate
-     */
-    function validateWalletState(address wallet) external view {
+    function validateAccountState(address) external pure {
         revert AlwaysReverts();
     }
 }

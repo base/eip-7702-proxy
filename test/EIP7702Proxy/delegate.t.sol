@@ -12,7 +12,7 @@ contract DelegateTest is EIP7702ProxyBase {
         _initializeProxy();
     }
 
-    function test_succeeds_whenReadingState() public {
+    function test_succeeds_whenReadingState() public view {
         assertEq(MockImplementation(payable(_eoa)).owner(), _newOwner, "Delegated read call should succeed");
     }
 
@@ -21,7 +21,7 @@ contract DelegateTest is EIP7702ProxyBase {
         MockImplementation(payable(_eoa)).mockFunction();
     }
 
-    function test_preservesReturnData_whenReturningBytes(bytes memory testData) public {
+    function test_preservesReturnData_whenReturningBytes(bytes memory testData) public view {
         bytes memory returnedData = MockImplementation(payable(_eoa)).returnBytesData(testData);
 
         assertEq(returnedData, testData, "Complex return data should be correctly delegated");

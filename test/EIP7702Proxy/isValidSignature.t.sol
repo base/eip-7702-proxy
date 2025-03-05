@@ -79,7 +79,7 @@ contract FailingImplementationTest is IsValidSignatureTestBase {
         _newOwner = payable(vm.addr(_NEW_OWNER_PRIVATE_KEY));
 
         // Deploy proxy with receiver and nonce tracker
-        _proxy = new EIP7702Proxy(_nonceTracker, _receiver);
+        _proxy = new EIP7702Proxy(address(_nonceTracker), address(_receiver));
         bytes memory proxyCode = address(_proxy).code;
         vm.etch(_eoa, proxyCode);
 
@@ -107,12 +107,12 @@ contract FailingImplementationTest is IsValidSignatureTestBase {
         return ERC1271_FAIL_VALUE;
     }
 
-    function test_returnsFailureValue_withEmptySignature(bytes32 message) public {
+    function test_returnsFailureValue_withEmptySignature(bytes32 message) public view {
         bytes4 result = MockImplementation(payable(wallet)).isValidSignature(message, "");
         assertEq(result, ERC1271_FAIL_VALUE, "Should reject empty signature");
     }
 
-    function test_returnsFailureValue_withInvalidS(bytes32 message) public {
+    function test_returnsFailureValue_withInvalidS(bytes32 message) public view {
         // Create a signature with obviously invalid s value
         // Valid s values must be < n/2 where n is the curve order
         // Using max uint256 value which is clearly too large
@@ -131,7 +131,7 @@ contract FailingImplementationTest is IsValidSignatureTestBase {
         assertEq(result, ERC1271_FAIL_VALUE, "Should reject signature with invalid s value");
     }
 
-    function test_returnsFailureValue_withInvalidV(bytes32 message) public {
+    function test_returnsFailureValue_withInvalidV(bytes32 message) public view {
         // Create signature with invalid v value (only 27 and 28 are valid)
         bytes32 r = bytes32(uint256(1));
         bytes32 s = bytes32(uint256(1));
@@ -148,7 +148,7 @@ contract FailingImplementationTest is IsValidSignatureTestBase {
         assertEq(result, ERC1271_FAIL_VALUE, "Should reject signature with invalid v value");
     }
 
-    function test_returnsFailureValue_withInvalidR(bytes32 message) public {
+    function test_returnsFailureValue_withInvalidR(bytes32 message) public view {
         // Create signature with invalid r value (using max uint256 which is above the curve order)
         bytes32 r = bytes32(type(uint256).max);
         bytes32 s = bytes32(uint256(1));
@@ -181,7 +181,7 @@ contract SucceedingImplementationTest is IsValidSignatureTestBase {
         _newOwner = payable(vm.addr(_NEW_OWNER_PRIVATE_KEY));
 
         // Deploy proxy with receiver and nonce tracker
-        _proxy = new EIP7702Proxy(_nonceTracker, _receiver);
+        _proxy = new EIP7702Proxy(address(_nonceTracker), address(_receiver));
         bytes memory proxyCode = address(_proxy).code;
         vm.etch(_eoa, proxyCode);
 
@@ -203,7 +203,7 @@ contract SucceedingImplementationTest is IsValidSignatureTestBase {
         return ERC1271_MAGIC_VALUE; // Implementation always returns success
     }
 
-    function test_returnsSuccessValue_withEmptySignature(bytes32 message) public {
+    function test_returnsSuccessValue_withEmptySignature(bytes32 message) public view {
         bytes4 result = MockImplementation(payable(wallet)).isValidSignature(message, "");
         assertEq(result, ERC1271_MAGIC_VALUE, "Should return success for any EOA signature");
     }
@@ -224,7 +224,7 @@ contract RevertingImplementationTest is IsValidSignatureTestBase {
         _newOwner = payable(vm.addr(_NEW_OWNER_PRIVATE_KEY));
 
         // Deploy proxy with receiver and nonce tracker
-        _proxy = new EIP7702Proxy(_nonceTracker, _receiver);
+        _proxy = new EIP7702Proxy(address(_nonceTracker), address(_receiver));
         bytes memory proxyCode = address(_proxy).code;
         vm.etch(_eoa, proxyCode);
 
@@ -280,7 +280,7 @@ contract ExtraDataTest is IsValidSignatureTestBase {
         _newOwner = payable(vm.addr(_NEW_OWNER_PRIVATE_KEY));
 
         // Deploy proxy with receiver and nonce tracker
-        _proxy = new EIP7702Proxy(_nonceTracker, _receiver);
+        _proxy = new EIP7702Proxy(address(_nonceTracker), address(_receiver));
         bytes memory proxyCode = address(_proxy).code;
         vm.etch(_eoa, proxyCode);
 
@@ -302,7 +302,7 @@ contract ExtraDataTest is IsValidSignatureTestBase {
         return ERC1271_MAGIC_VALUE; // Implementation always returns success (with extra data)
     }
 
-    function test_succeeds_withExtraReturnData(bytes32 message) public {
+    function test_succeeds_withExtraReturnData(bytes32 message) public view {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(_EOA_PRIVATE_KEY, message);
         bytes memory signature = abi.encodePacked(r, s, v);
 

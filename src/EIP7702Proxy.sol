@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
 import {Proxy} from "openzeppelin-contracts/contracts/proxy/Proxy.sol";
@@ -8,7 +8,7 @@ import {Receiver} from "solady/accounts/Receiver.sol";
 
 import {NonceTracker} from "./NonceTracker.sol";
 import {DefaultReceiver} from "./DefaultReceiver.sol";
-import {IWalletValidator} from "./interfaces/IWalletValidator.sol";
+import {IAccountStateValidator} from "./interfaces/IAccountStateValidator.sol";
 
 /// @title EIP7702Proxy
 ///
@@ -27,41 +27,37 @@ contract EIP7702Proxy is Proxy {
         "EIP7702ProxyImplementationSet(uint256 chainId,address proxy,uint256 nonce,address currentImplementation,address newImplementation,bytes callData,address validator)"
     );
 
-    /// @notice A default implementation that allows this address to receive tokens before initialization
-    Receiver public immutable receiver;
-
     /// @notice Address of the global nonce tracker for initialization
     NonceTracker public immutable nonceTracker;
+
+    /// @notice A default implementation that allows this address to receive tokens before initialization
+    address public immutable receiver;
 
     /// @notice Address of this proxy contract delegate
     address internal immutable _proxy;
 
     /// @notice Constructor arguments are zero
-    error ZeroValueConstructorArguments();
+    error ZeroAddress();
 
-    /// @notice Initialization signature is invalid
+    /// @notice EOA signature is invalid
     error InvalidSignature();
 
     /// @notice Initializes the proxy with a default receiver implementation and nonce tracker
     ///
     /// @param nonceTracker_ The address of the nonce tracker contract
     /// @param receiver_ The address of the receiver contract
-    constructor(NonceTracker nonceTracker_, Receiver receiver_) {
-        if (address(receiver_) == address(0)) {
-            revert ZeroValueConstructorArguments();
-        }
-        if (address(nonceTracker_) == address(0)) {
-            revert ZeroValueConstructorArguments();
-        }
+    constructor(address nonceTracker_, address receiver_) {
+        if (nonceTracker_ == address(0)) revert ZeroAddress();
+        if (receiver_ == address(0)) revert ZeroAddress();
 
-        nonceTracker = nonceTracker_;
+        nonceTracker = NonceTracker(nonceTracker_);
         receiver = receiver_;
         _proxy = address(this);
     }
 
-    /// @notice Sets the ERC-1967 implementation slot after signature verification and optionally executes `callData` on the `newImplementation`
+    /// @notice Sets the ERC-1967 implementation slot after signature verification and executes `callData` on the `newImplementation` if provided
     ///
-    /// @dev Validates resulting wallet state after upgrade by calling `validateWalletState` on the supplied validator contract
+    /// @dev Validates resulting wallet state after upgrade by calling `validateAccountState` on the supplied validator contract
     /// @dev Signature must be from the EOA's address
     ///
     /// @param newImplementation The implementation address to set
@@ -98,45 +94,44 @@ contract EIP7702Proxy is Proxy {
         ERC1967Utils.upgradeToAndCall(newImplementation, callData);
 
         // Validate wallet state after upgrade, reverting if invalid
-        IWalletValidator(validator).validateWalletState(address(this));
+        IAccountStateValidator(validator).validateAccountState(address(this));
     }
 
     /// @notice Handles ERC-1271 signature validation by enforcing a final `ecrecover` check if signatures fail `isValidSignature` check
     ///
     /// @dev This ensures EOA signatures are considered valid regardless of the implementation's `isValidSignature` implementation
-    ///
     /// @dev When calling `isValidSignature` from the implementation contract, note that calling `this.isValidSignature` will invoke this
-    ///      function and make an `ecrecover` check, whereas calling a public `isValidSignature` directly from the implementation contract will not.
+    ///      function and make an `ecrecover` check, whereas calling a public `isValidSignature` directly from the implementation contract will not
+    /// @dev Cannot be declared as `view` given delegatecall to implementation contract
     ///
     /// @param hash The hash of the message being signed
     /// @param signature The signature of the message
     ///
     /// @return The result of the `isValidSignature` check
     function isValidSignature(bytes32 hash, bytes calldata signature) external returns (bytes4) {
-        // First try delegatecall to implementation
+        // Delegatecall to implementation with received data
         (bool success, bytes memory result) = _implementation().delegatecall(msg.data);
 
-        // If delegatecall succeeded and returned magic value, return that
+        // Early return magic value if delegatecall returned magic value
         if (success && result.length == 32 && bytes4(result) == _ERC1271_MAGIC_VALUE) {
             return _ERC1271_MAGIC_VALUE;
         }
 
-        // Only return success if there was no error and the signer matches
+        // Validate signature against EOA as fallback
         (address recovered, ECDSA.RecoverError error,) = ECDSA.tryRecover(hash, signature);
         if (error == ECDSA.RecoverError.NoError && recovered == address(this)) {
             return _ERC1271_MAGIC_VALUE;
         }
 
-        // If all checks fail, return failure value
+        // Default return failure value
         return _ERC1271_FAIL_VALUE;
     }
 
-    /// @notice Returns the ERC-1967 implementation address, or the default receiver if
-    ///         the implementation is not set
+    /// @notice Returns the ERC-1967 implementation address, or the default receiver if the implementation is not set
     ///
     /// @return implementation The implementation address for this proxy
-    function _implementation() internal view override returns (address) {
-        address implementation = ERC1967Utils.getImplementation();
-        return implementation == address(0) ? address(receiver) : implementation;
+    function _implementation() internal view override returns (address implementation) {
+        implementation = ERC1967Utils.getImplementation();
+        if (implementation == address(0)) implementation = receiver;
     }
 }
