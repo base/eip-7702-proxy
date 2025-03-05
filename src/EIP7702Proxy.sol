@@ -42,7 +42,7 @@ contract EIP7702Proxy is Proxy {
     /// @notice EOA signature is invalid
     error InvalidSignature();
 
-    /// @notice Initializes the proxy with a default receiver implementation and nonce tracker
+    /// @notice Initializes the proxy with a default receiver implementation and an external nonce tracker
     ///
     /// @param nonceTracker_ The address of the nonce tracker contract
     /// @param receiver_ The address of the receiver contract
