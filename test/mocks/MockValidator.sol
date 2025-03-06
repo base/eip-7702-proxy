@@ -11,11 +11,24 @@ import {MockImplementation} from "./MockImplementation.sol";
 contract MockValidator is IAccountStateValidator {
     error WalletNotInitialized();
 
+    MockImplementation public immutable expectedImplementation;
+
+    constructor(MockImplementation _expectedImplementation) {
+        expectedImplementation = _expectedImplementation;
+    }
+
     /**
      * @dev Validates that the wallet is initialized
      * @param wallet Address of the wallet to validate
+     * @param implementation Address of the expected implementation
      */
-    function validateAccountState(address wallet) external view {
+    function validateAccountState(address wallet, address implementation) external view {
+        // Check implementation first
+        if (implementation != address(expectedImplementation)) {
+            revert InvalidImplementation(address(expectedImplementation), implementation);
+        }
+
+        // Then check initialization
         bool isInitialized = MockImplementation(wallet).initialized();
         if (!isInitialized) revert WalletNotInitialized();
     }

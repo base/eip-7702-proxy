@@ -5,6 +5,7 @@ import {EIP7702Proxy} from "../../src/EIP7702Proxy.sol";
 import {DefaultReceiver} from "../../src/DefaultReceiver.sol";
 import {EIP7702ProxyBase} from "../base/EIP7702ProxyBase.sol";
 import {MockImplementation} from "../mocks/MockImplementation.sol";
+import {MockValidator} from "../mocks/MockValidator.sol";
 
 contract DelegateTest is EIP7702ProxyBase {
     function setUp() public override {
@@ -48,20 +49,21 @@ contract DelegateTest is EIP7702ProxyBase {
 
         // Deploy a new implementation
         MockImplementation newImplementation = new MockImplementation();
-
+        MockValidator newImplementationValidator = new MockValidator(newImplementation);
         // Create signature for upgrade
         bytes memory signature = _signSetImplementationData(
             _EOA_PRIVATE_KEY,
             address(newImplementation),
             0, // chainId 0 for cross-chain
-            ""
+            "",
+            address(newImplementationValidator)
         );
 
         // Upgrade to the new implementation
         EIP7702Proxy(_eoa).setImplementation(
             address(newImplementation),
             "", // no init data needed
-            address(_validator),
+            address(newImplementationValidator),
             signature,
             true
         );

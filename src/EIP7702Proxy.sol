@@ -94,7 +94,7 @@ contract EIP7702Proxy is Proxy {
         ERC1967Utils.upgradeToAndCall(newImplementation, callData);
 
         // Validate wallet state after upgrade, reverting if invalid
-        IAccountStateValidator(validator).validateAccountState(address(this));
+        IAccountStateValidator(validator).validateAccountState(address(this), newImplementation);
     }
 
     /// @notice Handles ERC-1271 signature validation by enforcing a final `ecrecover` check if signatures fail `isValidSignature` check

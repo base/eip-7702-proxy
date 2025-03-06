@@ -50,7 +50,7 @@ contract CoinbaseImplementationTest is Test {
         _cbswImplementation = new CoinbaseSmartWallet();
         _nonceTracker = new NonceTracker();
         _receiver = new DefaultReceiver();
-        _cbswValidator = new CoinbaseSmartWalletValidator();
+        _cbswValidator = new CoinbaseSmartWalletValidator(_cbswImplementation);
 
         // Deploy proxy with receiver and nonce tracker
         _proxy = new EIP7702Proxy(address(_nonceTracker), address(_receiver));

@@ -11,6 +11,8 @@ import {IERC1967} from "openzeppelin-contracts/contracts/interfaces/IERC1967.sol
 import {EIP7702ProxyBase} from "../base/EIP7702ProxyBase.sol";
 import {MockImplementation} from "../mocks/MockImplementation.sol";
 import {MockRevertingValidator} from "../mocks/MockRevertingValidator.sol";
+import {IAccountStateValidator} from "../../src/interfaces/IAccountStateValidator.sol";
+import {MockValidator} from "../mocks/MockValidator.sol";
 
 contract SetImplementationTest is EIP7702ProxyBase {
     MockImplementation _newImplementation;
@@ -28,7 +30,8 @@ contract SetImplementationTest is EIP7702ProxyBase {
             _EOA_PRIVATE_KEY,
             address(_implementation),
             0, // chainId 0 for cross-chain
-            initArgs
+            initArgs,
+            address(_validator)
         );
         EIP7702Proxy(_eoa).setImplementation(
             address(_implementation),
@@ -49,17 +52,20 @@ contract SetImplementationTest is EIP7702ProxyBase {
             address(_implementation),
             "Implementation should be set to standard implementation"
         );
+        MockValidator newImplementationValidator = new MockValidator(_newImplementation);
+
         bytes memory signature = _signSetImplementationData(
             _EOA_PRIVATE_KEY,
             address(_newImplementation),
             0, // chainId 0 for cross-chain
-            "" // empty calldata
+            "", // empty calldata
+            address(newImplementationValidator)
         );
 
         EIP7702Proxy(_eoa).setImplementation(
             address(_newImplementation),
             "",
-            address(_validator), // same validator
+            address(newImplementationValidator), // same validator
             signature,
             true // allow cross-chain replay
         );
@@ -75,7 +81,8 @@ contract SetImplementationTest is EIP7702ProxyBase {
             _EOA_PRIVATE_KEY,
             address(_implementation),
             0, // chainId 0 for cross-chain
-            initArgs
+            initArgs,
+            address(_validator)
         );
 
         vm.expectEmit(true, false, false, false, address(_eoa));
@@ -97,7 +104,8 @@ contract SetImplementationTest is EIP7702ProxyBase {
             _EOA_PRIVATE_KEY,
             address(_implementation),
             0, // chainId 0 for cross-chain
-            initArgs
+            initArgs,
+            address(_validator)
         );
         EIP7702Proxy(_eoa).setImplementation(
             address(_implementation),
@@ -118,7 +126,8 @@ contract SetImplementationTest is EIP7702ProxyBase {
             _EOA_PRIVATE_KEY,
             address(_implementation),
             block.chainid, // non-zero chainId
-            initArgs
+            initArgs,
+            address(_validator)
         );
 
         EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature, false);
@@ -166,7 +175,8 @@ contract SetImplementationTest is EIP7702ProxyBase {
             _EOA_PRIVATE_KEY,
             address(_implementation), // same implementation
             0, // chainId 0 for cross-chain
-            "" // empty calldata
+            "", // empty calldata
+            address(_validator)
         );
 
         EIP7702Proxy(_eoa).setImplementation(
@@ -193,9 +203,13 @@ contract SetImplementationTest is EIP7702ProxyBase {
 
         for (uint8 i = 0; i < numResets; i++) {
             MockImplementation nextImplementation = new MockImplementation();
-            bytes memory signature =
-                _signSetImplementationData(_EOA_PRIVATE_KEY, address(nextImplementation), block.chainid, "");
-            EIP7702Proxy(_eoa).setImplementation(address(nextImplementation), "", address(_validator), signature, false);
+            MockValidator nextImplementationValidator = new MockValidator(nextImplementation);
+            bytes memory signature = _signSetImplementationData(
+                _EOA_PRIVATE_KEY, address(nextImplementation), block.chainid, "", address(nextImplementationValidator)
+            );
+            EIP7702Proxy(_eoa).setImplementation(
+                address(nextImplementation), "", address(nextImplementationValidator), signature, false
+            );
 
             assertEq(_nonceTracker.nonces(_eoa), initialNonce + i + 1, "Nonce should increment by one after each reset");
         }
@@ -208,7 +222,8 @@ contract SetImplementationTest is EIP7702ProxyBase {
             _EOA_PRIVATE_KEY,
             address(_implementation),
             0, // chainId 0 for cross-chain
-            reinitArgs // attempt to reinitialize already-initialized implementation
+            reinitArgs, // attempt to reinitialize already-initialized implementation
+            address(_validator)
         );
 
         vm.expectRevert();
@@ -329,8 +344,9 @@ contract SetImplementationTest is EIP7702ProxyBase {
         );
 
         // create signature for original proxy
-        bytes memory signature =
-            _signSetImplementationData(_EOA_PRIVATE_KEY, address(_newImplementation), block.chainid, "");
+        bytes memory signature = _signSetImplementationData(
+            _EOA_PRIVATE_KEY, address(_newImplementation), block.chainid, "", address(_validator)
+        );
 
         // attempt to play signature on second proxy
         vm.expectRevert(EIP7702Proxy.InvalidSignature.selector);
@@ -349,7 +365,8 @@ contract SetImplementationTest is EIP7702ProxyBase {
             _EOA_PRIVATE_KEY,
             address(_implementation), // sign over standard implementation
             block.chainid,
-            initArgs
+            initArgs,
+            address(_validator)
         );
 
         vm.expectRevert(EIP7702Proxy.InvalidSignature.selector);
@@ -365,8 +382,9 @@ contract SetImplementationTest is EIP7702ProxyBase {
     function test_reverts_whenSignatureReplayedWithDifferentArgs(bytes memory differentInitArgs) public {
         bytes memory initArgs = _createInitArgs(_newOwner);
         vm.assume(keccak256(differentInitArgs) != keccak256(initArgs));
-        bytes memory signature =
-            _signSetImplementationData(_EOA_PRIVATE_KEY, address(_implementation), block.chainid, initArgs);
+        bytes memory signature = _signSetImplementationData(
+            _EOA_PRIVATE_KEY, address(_implementation), block.chainid, initArgs, address(_validator)
+        );
 
         vm.expectRevert(EIP7702Proxy.InvalidSignature.selector);
         EIP7702Proxy(_eoa).setImplementation(
@@ -379,8 +397,9 @@ contract SetImplementationTest is EIP7702ProxyBase {
         vm.assume(differentValidator != address(0));
 
         bytes memory initArgs = _createInitArgs(_newOwner);
-        bytes memory signature =
-            _signSetImplementationData(_EOA_PRIVATE_KEY, address(_implementation), block.chainid, initArgs);
+        bytes memory signature = _signSetImplementationData(
+            _EOA_PRIVATE_KEY, address(_implementation), block.chainid, initArgs, address(_validator)
+        );
 
         vm.expectRevert(EIP7702Proxy.InvalidSignature.selector);
         EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, differentValidator, signature, false);
@@ -413,8 +432,9 @@ contract SetImplementationTest is EIP7702ProxyBase {
 
     function test_reverts_whenSignatureReplayedWithSameNonce() public {
         bytes memory initArgs = _createInitArgs(_newOwner);
-        bytes memory signature =
-            _signSetImplementationData(_EOA_PRIVATE_KEY, address(_implementation), block.chainid, initArgs);
+        bytes memory signature = _signSetImplementationData(
+            _EOA_PRIVATE_KEY, address(_implementation), block.chainid, initArgs, address(_validator)
+        );
         EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature, false);
         assertEq(
             _getERC1967Implementation(_eoa),
@@ -450,5 +470,41 @@ contract SetImplementationTest is EIP7702ProxyBase {
 
         vm.expectRevert(EIP7702Proxy.InvalidSignature.selector);
         EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature, false);
+    }
+
+    function test_reverts_whenImplementationDoesNotMatchValidator() public {
+        MockImplementation expectedImpl = new MockImplementation();
+        MockImplementation actualImpl = new MockImplementation();
+
+        // Create mock validator expecting a specific implementation
+        MockValidator validator = new MockValidator(expectedImpl);
+
+        bytes memory signature =
+            _signSetImplementationData(_EOA_PRIVATE_KEY, address(actualImpl), 0, "", address(validator));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccountStateValidator.InvalidImplementation.selector, address(expectedImpl), address(actualImpl)
+            )
+        );
+        EIP7702Proxy(_eoa).setImplementation(address(actualImpl), "", address(validator), signature, true);
+    }
+
+    function test_succeeds_whenImplementationMatchesValidator() public {
+        // Create mock validator with matching implementation
+        MockValidator validator = new MockValidator(_implementation);
+
+        bytes memory initArgs = _createInitArgs(_newOwner);
+        bytes memory signature =
+            _signSetImplementationData(_EOA_PRIVATE_KEY, address(_implementation), 0, initArgs, address(validator));
+
+        // Should not revert
+        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(validator), signature, true);
+
+        assertEq(
+            _getERC1967Implementation(_eoa),
+            address(_implementation),
+            "Implementation should be set to expected address"
+        );
     }
 }

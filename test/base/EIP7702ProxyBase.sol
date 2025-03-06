@@ -46,7 +46,7 @@ abstract contract EIP7702ProxyBase is Test {
         _implementation = new MockImplementation();
         _nonceTracker = new NonceTracker();
         _receiver = new DefaultReceiver();
-        _validator = new MockValidator();
+        _validator = new MockValidator(_implementation);
 
         // Deploy proxy with receiver and nonce tracker
         _proxy = new EIP7702Proxy(address(_nonceTracker), address(_receiver));
@@ -65,7 +65,8 @@ abstract contract EIP7702ProxyBase is Test {
             _EOA_PRIVATE_KEY,
             address(_implementation),
             0, // chainId 0 for cross-chain
-            initArgs
+            initArgs,
+            address(_validator)
         );
 
         EIP7702Proxy(_eoa).setImplementation(
@@ -89,7 +90,8 @@ abstract contract EIP7702ProxyBase is Test {
         uint256 signerPk,
         address newImplementationAddress,
         uint256 chainId,
-        bytes memory callData
+        bytes memory callData,
+        address validator
     ) internal view returns (bytes memory) {
         uint256 nonce = _nonceTracker.nonces(_eoa);
         address currentImpl = _getERC1967Implementation(_eoa);
@@ -103,7 +105,7 @@ abstract contract EIP7702ProxyBase is Test {
                 currentImpl,
                 newImplementationAddress,
                 keccak256(callData),
-                address(_validator)
+                validator
             )
         );
 

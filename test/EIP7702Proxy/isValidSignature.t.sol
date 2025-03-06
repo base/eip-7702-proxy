@@ -73,7 +73,7 @@ contract FailingImplementationTest is IsValidSignatureTestBase {
         _implementation = new FailingSignatureImplementation();
         _nonceTracker = new NonceTracker();
         _receiver = new DefaultReceiver();
-        _validator = new MockValidator();
+        _validator = new MockValidator(_implementation);
 
         _eoa = payable(vm.addr(_EOA_PRIVATE_KEY));
         _newOwner = payable(vm.addr(_NEW_OWNER_PRIVATE_KEY));
@@ -89,7 +89,8 @@ contract FailingImplementationTest is IsValidSignatureTestBase {
             _EOA_PRIVATE_KEY,
             address(_implementation),
             0, // chainId 0 for cross-chain
-            initArgs
+            initArgs,
+            address(_validator)
         );
 
         EIP7702Proxy(_eoa).setImplementation(
@@ -175,7 +176,7 @@ contract SucceedingImplementationTest is IsValidSignatureTestBase {
         _implementation = new MockImplementation();
         _nonceTracker = new NonceTracker();
         _receiver = new DefaultReceiver();
-        _validator = new MockValidator();
+        _validator = new MockValidator(_implementation);
 
         _eoa = payable(vm.addr(_EOA_PRIVATE_KEY));
         _newOwner = payable(vm.addr(_NEW_OWNER_PRIVATE_KEY));
@@ -191,7 +192,8 @@ contract SucceedingImplementationTest is IsValidSignatureTestBase {
             _EOA_PRIVATE_KEY,
             address(_implementation),
             0, // chainId 0 for cross-chain
-            initArgs
+            initArgs,
+            address(_validator)
         );
 
         EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature, true);
@@ -218,7 +220,7 @@ contract RevertingImplementationTest is IsValidSignatureTestBase {
         _implementation = new RevertingIsValidSignatureImplementation();
         _nonceTracker = new NonceTracker();
         _receiver = new DefaultReceiver();
-        _validator = new MockValidator();
+        _validator = new MockValidator(_implementation);
 
         _eoa = payable(vm.addr(_EOA_PRIVATE_KEY));
         _newOwner = payable(vm.addr(_NEW_OWNER_PRIVATE_KEY));
@@ -234,7 +236,8 @@ contract RevertingImplementationTest is IsValidSignatureTestBase {
             _EOA_PRIVATE_KEY,
             address(_implementation),
             0, // chainId 0 for cross-chain
-            initArgs
+            initArgs,
+            address(_validator)
         );
 
         EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature, true);
@@ -274,7 +277,7 @@ contract ExtraDataTest is IsValidSignatureTestBase {
         _implementation = new MockImplementationWithExtraData();
         _nonceTracker = new NonceTracker();
         _receiver = new DefaultReceiver();
-        _validator = new MockValidator();
+        _validator = new MockValidator(_implementation);
 
         _eoa = payable(vm.addr(_EOA_PRIVATE_KEY));
         _newOwner = payable(vm.addr(_NEW_OWNER_PRIVATE_KEY));
@@ -290,7 +293,8 @@ contract ExtraDataTest is IsValidSignatureTestBase {
             _EOA_PRIVATE_KEY,
             address(_implementation),
             0, // chainId 0 for cross-chain
-            initArgs
+            initArgs,
+            address(_validator)
         );
 
         EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature, true);
