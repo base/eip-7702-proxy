@@ -31,7 +31,7 @@ contract EIP7702Proxy is Proxy {
     NonceTracker public immutable nonceTracker;
 
     /// @notice A default implementation that allows this address to receive tokens before initialization
-    address public immutable receiver;
+    address internal immutable _receiver;
 
     /// @notice Address of this proxy contract delegate
     address internal immutable _proxy;
@@ -45,13 +45,13 @@ contract EIP7702Proxy is Proxy {
     /// @notice Initializes the proxy with a default receiver implementation and an external nonce tracker
     ///
     /// @param nonceTracker_ The address of the nonce tracker contract
-    /// @param receiver_ The address of the receiver contract
-    constructor(address nonceTracker_, address receiver_) {
+    /// @param receiver The address of the receiver contract
+    constructor(address nonceTracker_, address receiver) {
         if (nonceTracker_ == address(0)) revert ZeroAddress();
-        if (receiver_ == address(0)) revert ZeroAddress();
+        if (receiver == address(0)) revert ZeroAddress();
 
         nonceTracker = NonceTracker(nonceTracker_);
-        receiver = receiver_;
+        _receiver = receiver;
         _proxy = address(this);
     }
 
@@ -132,6 +132,6 @@ contract EIP7702Proxy is Proxy {
     /// @return implementation The implementation address for this proxy
     function _implementation() internal view override returns (address implementation) {
         implementation = ERC1967Utils.getImplementation();
-        if (implementation == address(0)) implementation = receiver;
+        if (implementation == address(0)) implementation = _receiver;
     }
 }
