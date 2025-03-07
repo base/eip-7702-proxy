@@ -9,7 +9,7 @@ import {IAccountStateValidator, ACCOUNT_STATE_VALIDATION_SUCCESS} from "../inter
 ///
 /// @notice Validates account state against invariants specific to CoinbaseSmartWallet
 contract CoinbaseSmartWalletValidator is IAccountStateValidator {
-    /// @notice Error thrown when an account has no nextOwnerIndex
+    /// @notice Error thrown when an account's nextOwnerIndex is 0
     error Unintialized();
 
     /// @notice The implementation of the CoinbaseSmartWallet this validator expects
@@ -19,8 +19,10 @@ contract CoinbaseSmartWalletValidator is IAccountStateValidator {
         _supportedImplementation = supportedImplementation;
     }
 
-    function supportedImplementation() external view override returns (address) {
-        return address(_supportedImplementation);
+    function supportedImplementations() external view override returns (address[] memory) {
+        address[] memory implementations = new address[](1);
+        implementations[0] = address(_supportedImplementation);
+        return implementations;
     }
 
     /// @inheritdoc IAccountStateValidator
@@ -28,7 +30,7 @@ contract CoinbaseSmartWalletValidator is IAccountStateValidator {
     /// @dev Mimics the exact logic used in `CoinbaseSmartWallet.initialize` for consistency
     function validateAccountState(address account, address implementation) external view override returns (bytes4) {
         if (implementation != address(_supportedImplementation)) {
-            revert InvalidImplementation(address(_supportedImplementation), implementation);
+            revert InvalidImplementation(implementation);
         }
         if (MultiOwnable(account).nextOwnerIndex() == 0) revert Unintialized();
         return ACCOUNT_STATE_VALIDATION_SUCCESS;

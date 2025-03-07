@@ -485,9 +485,7 @@ contract SetImplementationTest is EIP7702ProxyBase {
             _signSetImplementationData(_EOA_PRIVATE_KEY, address(actualImpl), 0, "", address(validator));
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccountStateValidator.InvalidImplementation.selector, address(expectedImpl), address(actualImpl)
-            )
+            abi.encodeWithSelector(IAccountStateValidator.InvalidImplementation.selector, address(actualImpl))
         );
         EIP7702Proxy(_eoa).setImplementation(address(actualImpl), "", address(validator), signature, true);
     }
@@ -566,9 +564,7 @@ contract SetImplementationTest is EIP7702ProxyBase {
         // Should revert because after initialization, the implementation
         // will be finalImpl but validator expects maliciousImpl
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccountStateValidator.InvalidImplementation.selector, address(maliciousImpl), address(finalImpl)
-            )
+            abi.encodeWithSelector(IAccountStateValidator.InvalidImplementation.selector, address(finalImpl))
         );
         EIP7702Proxy(_eoa).setImplementation(address(maliciousImpl), initArgs, address(validator), signature, true);
     }

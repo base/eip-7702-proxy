@@ -108,15 +108,17 @@ contract CoinbaseSmartWalletValidatorTest is Test {
         assertGt(CoinbaseSmartWallet(payable(_eoa)).nextOwnerIndex(), 0);
     }
 
-    function test_supportedImplementation_returnsExpectedImplementation() public {
+    function test_supportedImplementations_returnsExpectedImplementation() public {
         // Deploy a new implementation and validator
         CoinbaseSmartWallet newImplementation = new CoinbaseSmartWallet();
         CoinbaseSmartWalletValidator validator = new CoinbaseSmartWalletValidator(newImplementation);
 
-        // Check that supportedImplementation returns the expected address
+        address[] memory actualImplementations = new address[](1);
+        actualImplementations[0] = address(newImplementation);
+        // Check that supportedImplementations returns the expected address
         assertEq(
-            validator.supportedImplementation(),
-            address(newImplementation),
+            validator.supportedImplementations(),
+            actualImplementations,
             "Supported implementation should match constructor argument"
         );
     }
@@ -134,9 +136,7 @@ contract CoinbaseSmartWalletValidatorTest is Test {
             _signSetImplementationData(_EOA_PRIVATE_KEY, initArgs, address(_implementation), address(validator));
 
         vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccountStateValidator.InvalidImplementation.selector, address(differentImpl), address(_implementation)
-            )
+            abi.encodeWithSelector(IAccountStateValidator.InvalidImplementation.selector, address(_implementation))
         );
         EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(validator), signature, true);
     }

@@ -19,8 +19,10 @@ contract MockValidator is IAccountStateValidator {
         expectedImplementation = _expectedImplementation;
     }
 
-    function supportedImplementation() external view returns (address) {
-        return address(expectedImplementation);
+    function supportedImplementations() external view returns (address[] memory) {
+        address[] memory implementations = new address[](1);
+        implementations[0] = address(expectedImplementation);
+        return implementations;
     }
 
     /**
@@ -30,7 +32,7 @@ contract MockValidator is IAccountStateValidator {
      */
     function validateAccountState(address wallet, address implementation) external view returns (bytes4) {
         if (implementation != address(expectedImplementation)) {
-            revert InvalidImplementation(address(expectedImplementation), implementation);
+            revert InvalidImplementation(implementation);
         }
 
         bool isInitialized = MockImplementation(wallet).initialized();
