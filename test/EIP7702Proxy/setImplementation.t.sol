@@ -5,7 +5,7 @@ import {EIP7702Proxy} from "../../src/EIP7702Proxy.sol";
 import {NonceTracker} from "../../src/NonceTracker.sol";
 
 import {ECDSA} from "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
-import {ERC1967Utils} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Utils.sol";
+// import {ERC1967Utils} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Utils.sol";
 import {IERC1967} from "openzeppelin-contracts/contracts/interfaces/IERC1967.sol";
 
 import {EIP7702ProxyBase} from "../base/EIP7702ProxyBase.sol";
@@ -14,6 +14,7 @@ import {MockRevertingValidator} from "../mocks/MockRevertingValidator.sol";
 import {IAccountStateValidator} from "../../src/interfaces/IAccountStateValidator.sol";
 import {MockValidator} from "../mocks/MockValidator.sol";
 import {MockInvalidValidator} from "../mocks/MockInvalidValidator.sol";
+import {MockMaliciousImplementation} from "../mocks/MockMaliciousImplementation.sol";
 
 contract SetImplementationTest is EIP7702ProxyBase {
     MockImplementation _newImplementation;
@@ -547,5 +548,28 @@ contract SetImplementationTest is EIP7702ProxyBase {
         EIP7702Proxy(_eoa).setImplementation(
             address(_implementation), initArgs, address(nonCompliantValidator), signature, true
         );
+    }
+
+    function test_reverts_whenImplementationChangesItsOwnImplementation() public {
+        // Create a chain of implementations
+        MockImplementation finalImpl = new MockImplementation();
+        MockMaliciousImplementation maliciousImpl = new MockMaliciousImplementation(address(finalImpl));
+
+        // Create validator expecting the malicious implementation
+        MockValidator validator = new MockValidator(maliciousImpl);
+
+        // Try to initialize with the malicious implementation
+        bytes memory initArgs = _createInitArgs(_newOwner);
+        bytes memory signature =
+            _signSetImplementationData(_EOA_PRIVATE_KEY, address(maliciousImpl), 0, initArgs, address(validator));
+
+        // Should revert because after initialization, the implementation
+        // will be finalImpl but validator expects maliciousImpl
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccountStateValidator.InvalidImplementation.selector, address(maliciousImpl), address(finalImpl)
+            )
+        );
+        EIP7702Proxy(_eoa).setImplementation(address(maliciousImpl), initArgs, address(validator), signature, true);
     }
 }

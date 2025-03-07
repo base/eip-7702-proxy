@@ -98,7 +98,7 @@ contract EIP7702Proxy is Proxy {
 
         // Validate wallet state after upgrade, reverting if invalid
         bytes4 validationResult =
-            IAccountStateValidator(validator).validateAccountState(address(this), newImplementation);
+            IAccountStateValidator(validator).validateAccountState(address(this), ERC1967Utils.getImplementation());
         if (validationResult != ACCOUNT_STATE_VALIDATION_SUCCESS) revert InvalidValidation();
     }
 
