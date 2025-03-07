@@ -8,7 +8,7 @@ import {Receiver} from "solady/accounts/Receiver.sol";
 
 import {NonceTracker} from "./NonceTracker.sol";
 import {DefaultReceiver} from "./DefaultReceiver.sol";
-import {IAccountStateValidator, VALIDATION_SUCCESS} from "./interfaces/IAccountStateValidator.sol";
+import {IAccountStateValidator, ACCOUNT_STATE_VALIDATION_SUCCESS} from "./interfaces/IAccountStateValidator.sol";
 
 /// @title EIP7702Proxy
 ///
@@ -42,7 +42,7 @@ contract EIP7702Proxy is Proxy {
     /// @notice EOA signature is invalid
     error InvalidSignature();
 
-    /// @notice Validator did not return VALIDATION_SUCCESS
+    /// @notice Validator did not return ACCOUNT_STATE_VALIDATION_SUCCESS
     error InvalidValidation();
 
     /// @notice Initializes the proxy with a default receiver implementation and an external nonce tracker
@@ -99,9 +99,7 @@ contract EIP7702Proxy is Proxy {
         // Validate wallet state after upgrade, reverting if invalid
         bytes4 validationResult =
             IAccountStateValidator(validator).validateAccountState(address(this), newImplementation);
-        if (validationResult != VALIDATION_SUCCESS) {
-            revert InvalidValidation();
-        }
+        if (validationResult != ACCOUNT_STATE_VALIDATION_SUCCESS) revert InvalidValidation();
     }
 
     /// @notice Handles ERC-1271 signature validation by enforcing a final `ecrecover` check if signatures fail `isValidSignature` check

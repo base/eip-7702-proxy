@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.23;
 
-import {IAccountStateValidator, VALIDATION_SUCCESS} from "../../src/interfaces/IAccountStateValidator.sol";
+import {
+    IAccountStateValidator, ACCOUNT_STATE_VALIDATION_SUCCESS
+} from "../../src/interfaces/IAccountStateValidator.sol";
 import {MockImplementation} from "./MockImplementation.sol";
 
 /**
@@ -17,6 +19,10 @@ contract MockValidator is IAccountStateValidator {
         expectedImplementation = _expectedImplementation;
     }
 
+    function supportedImplementation() external view returns (address) {
+        return address(expectedImplementation);
+    }
+
     /**
      * @dev Validates that the wallet is initialized
      * @param wallet Address of the wallet to validate
@@ -29,6 +35,6 @@ contract MockValidator is IAccountStateValidator {
 
         bool isInitialized = MockImplementation(wallet).initialized();
         if (!isInitialized) revert WalletNotInitialized();
-        return VALIDATION_SUCCESS;
+        return ACCOUNT_STATE_VALIDATION_SUCCESS;
     }
 }

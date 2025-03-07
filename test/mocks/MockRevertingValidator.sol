@@ -8,6 +8,10 @@ import {IAccountStateValidator} from "../../src/interfaces/IAccountStateValidato
 contract MockRevertingValidator is IAccountStateValidator {
     error InvalidValidation();
 
+    function supportedImplementation() external view returns (address) {
+        return address(0);
+    }
+
     function validateAccountState(address, address) external pure returns (bytes4) {
         revert InvalidValidation();
     }
