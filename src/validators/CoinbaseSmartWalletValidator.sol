@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import {MultiOwnable} from "smart-wallet/MultiOwnable.sol";
 import {CoinbaseSmartWallet} from "smart-wallet/CoinbaseSmartWallet.sol";
-import {IAccountStateValidator} from "../interfaces/IAccountStateValidator.sol";
+import {IAccountStateValidator, VALIDATION_SUCCESS} from "../interfaces/IAccountStateValidator.sol";
 
 /// @title CoinbaseSmartWalletValidator
 ///
@@ -22,10 +22,11 @@ contract CoinbaseSmartWalletValidator is IAccountStateValidator {
     /// @inheritdoc IAccountStateValidator
     ///
     /// @dev Mimics the exact logic used in `CoinbaseSmartWallet.initialize` for consistency
-    function validateAccountState(address account, address implementation) external view override {
+    function validateAccountState(address account, address implementation) external view override returns (bytes4) {
         if (implementation != address(walletImplementation)) {
             revert InvalidImplementation(address(walletImplementation), implementation);
         }
         if (MultiOwnable(account).nextOwnerIndex() == 0) revert Unintialized();
+        return VALIDATION_SUCCESS;
     }
 }

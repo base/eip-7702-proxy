@@ -13,6 +13,7 @@ import {MockImplementation} from "../mocks/MockImplementation.sol";
 import {MockRevertingValidator} from "../mocks/MockRevertingValidator.sol";
 import {IAccountStateValidator} from "../../src/interfaces/IAccountStateValidator.sol";
 import {MockValidator} from "../mocks/MockValidator.sol";
+import {MockInvalidValidator} from "../mocks/MockInvalidValidator.sol";
 
 contract SetImplementationTest is EIP7702ProxyBase {
     MockImplementation _newImplementation;
@@ -255,7 +256,7 @@ contract SetImplementationTest is EIP7702ProxyBase {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(_EOA_PRIVATE_KEY, hash);
         bytes memory signature = abi.encodePacked(r, s, v);
 
-        vm.expectRevert(MockRevertingValidator.AlwaysReverts.selector);
+        vm.expectRevert(EIP7702Proxy.InvalidValidation.selector);
         EIP7702Proxy(_eoa).setImplementation(
             address(_implementation), reinitArgs, address(revertingValidator), signature, true
         );
@@ -505,6 +506,46 @@ contract SetImplementationTest is EIP7702ProxyBase {
             _getERC1967Implementation(_eoa),
             address(_implementation),
             "Implementation should be set to expected address"
+        );
+    }
+
+    function test_reverts_whenValidatorReturnsWrongMagicValue() public {
+        MockInvalidValidator invalidValidator = new MockInvalidValidator();
+
+        bytes memory initArgs = _createInitArgs(_newOwner);
+        bytes memory signature = _signSetImplementationData(
+            _EOA_PRIVATE_KEY, address(_implementation), 0, initArgs, address(invalidValidator)
+        );
+
+        vm.expectRevert(EIP7702Proxy.InvalidValidation.selector);
+        EIP7702Proxy(_eoa).setImplementation(
+            address(_implementation), initArgs, address(invalidValidator), signature, true
+        );
+    }
+
+    function test_reverts_whenValidatorIsEOA() public {
+        address eoaValidator = makeAddr("eoaValidator");
+
+        bytes memory initArgs = _createInitArgs(_newOwner);
+        bytes memory signature =
+            _signSetImplementationData(_EOA_PRIVATE_KEY, address(_implementation), 0, initArgs, eoaValidator);
+
+        vm.expectRevert();
+        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, eoaValidator, signature, true);
+    }
+
+    function test_reverts_whenValidatorIsNonCompliantContract() public {
+        // Deploy a contract that doesn't implement IAccountStateValidator
+        MockImplementation nonCompliantValidator = new MockImplementation();
+
+        bytes memory initArgs = _createInitArgs(_newOwner);
+        bytes memory signature = _signSetImplementationData(
+            _EOA_PRIVATE_KEY, address(_implementation), 0, initArgs, address(nonCompliantValidator)
+        );
+
+        vm.expectRevert();
+        EIP7702Proxy(_eoa).setImplementation(
+            address(_implementation), initArgs, address(nonCompliantValidator), signature, true
         );
     }
 }

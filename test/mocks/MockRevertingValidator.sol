@@ -6,9 +6,9 @@ import {IAccountStateValidator} from "../../src/interfaces/IAccountStateValidato
 /// @title MockRevertingValidator
 /// @dev Mock validator that always reverts
 contract MockRevertingValidator is IAccountStateValidator {
-    error AlwaysReverts();
+    error InvalidValidation();
 
-    function validateAccountState(address, address) external pure {
-        revert AlwaysReverts();
+    function validateAccountState(address, address) external pure returns (bytes4) {
+        revert InvalidValidation();
     }
 }
