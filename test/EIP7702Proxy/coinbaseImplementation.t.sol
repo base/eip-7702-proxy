@@ -68,13 +68,7 @@ contract CoinbaseImplementationTest is Test {
         bytes memory initArgs = _createInitArgs(_newOwner);
         bytes memory signature = _signSetImplementationData(_EOA_PRIVATE_KEY, initArgs);
 
-        EIP7702Proxy(_eoa).setImplementation(
-            address(_cbswImplementation),
-            initArgs,
-            address(_cbswValidator),
-            signature,
-            true // Allow cross-chain replay for tests
-        );
+        EIP7702Proxy(_eoa).setImplementation(address(_cbswImplementation), initArgs, address(_cbswValidator), signature);
 
         _wallet = CoinbaseSmartWallet(payable(_eoa));
     }
@@ -101,7 +95,7 @@ contract CoinbaseImplementationTest is Test {
         bytes32 initHash = keccak256(
             abi.encode(
                 _IMPLEMENTATION_SET_TYPEHASH,
-                0, // chainId 0 for cross-chain
+                block.chainid,
                 _proxy,
                 _nonceTracker.nonces(_eoa),
                 _getERC1967Implementation(address(_eoa)),
@@ -232,8 +226,6 @@ contract CoinbaseImplementationTest is Test {
         bytes memory signature = _signSetImplementationData(_EOA_PRIVATE_KEY, initArgs);
 
         vm.expectRevert(CoinbaseSmartWallet.Initialized.selector);
-        EIP7702Proxy(_eoa).setImplementation(
-            address(_cbswImplementation), initArgs, address(_cbswValidator), signature, true
-        );
+        EIP7702Proxy(_eoa).setImplementation(address(_cbswImplementation), initArgs, address(_cbswValidator), signature);
     }
 }

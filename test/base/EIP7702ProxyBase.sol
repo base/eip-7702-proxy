@@ -61,35 +61,22 @@ abstract contract EIP7702ProxyBase is Test {
     /// @dev Initialize the proxy with the new owner
     function _initializeProxy() internal {
         bytes memory initArgs = _createInitArgs(_newOwner);
-        bytes memory signature = _signSetImplementationData(
-            _EOA_PRIVATE_KEY,
-            address(_implementation),
-            0, // chainId 0 for cross-chain
-            initArgs,
-            address(_validator)
-        );
+        bytes memory signature =
+            _signSetImplementationData(_EOA_PRIVATE_KEY, address(_implementation), initArgs, address(_validator));
 
-        EIP7702Proxy(_eoa).setImplementation(
-            address(_implementation),
-            initArgs,
-            address(_validator),
-            signature,
-            true // Allow cross-chain replay for tests
-        );
+        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature);
     }
 
     /**
      * @dev Helper to generate initialization signature
      * @param signerPk Private key of the signer
      * @param newImplementationAddress New implementation contract address
-     * @param chainId Chain ID for the signature
      * @param callData Initialization data for the implementation
      * @return Signature bytes
      */
     function _signSetImplementationData(
         uint256 signerPk,
         address newImplementationAddress,
-        uint256 chainId,
         bytes memory callData,
         address validator
     ) internal view returns (bytes memory) {
@@ -99,7 +86,7 @@ abstract contract EIP7702ProxyBase is Test {
         bytes32 initHash = keccak256(
             abi.encode(
                 _IMPLEMENTATION_SET_TYPEHASH,
-                chainId,
+                block.chainid,
                 _proxy,
                 nonce,
                 currentImpl,

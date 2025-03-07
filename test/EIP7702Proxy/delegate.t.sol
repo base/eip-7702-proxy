@@ -52,11 +52,7 @@ contract DelegateTest is EIP7702ProxyBase {
         MockValidator newImplementationValidator = new MockValidator(newImplementation);
         // Create signature for upgrade
         bytes memory signature = _signSetImplementationData(
-            _EOA_PRIVATE_KEY,
-            address(newImplementation),
-            0, // chainId 0 for cross-chain
-            "",
-            address(newImplementationValidator)
+            _EOA_PRIVATE_KEY, address(newImplementation), "", address(newImplementationValidator)
         );
 
         // Upgrade to the new implementation
@@ -64,8 +60,7 @@ contract DelegateTest is EIP7702ProxyBase {
             address(newImplementation),
             "", // no init data needed
             address(newImplementationValidator),
-            signature,
-            true
+            signature
         );
 
         // Verify the implementation was changed

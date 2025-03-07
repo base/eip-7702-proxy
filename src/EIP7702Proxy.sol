@@ -67,19 +67,17 @@ contract EIP7702Proxy is Proxy {
     /// @param callData Optional calldata to call on new implementation
     /// @param validator The address of the validator contract
     /// @param signature The EOA signature authorizing this change
-    /// @param allowCrossChainReplay use a chain-agnostic or chain-specific hash
     function setImplementation(
         address newImplementation,
         bytes calldata callData,
         address validator,
-        bytes calldata signature,
-        bool allowCrossChainReplay
+        bytes calldata signature
     ) external {
         // Construct hash using typehash to prevent signature collisions
         bytes32 hash = keccak256(
             abi.encode(
                 _IMPLEMENTATION_SET_TYPEHASH,
-                allowCrossChainReplay ? 0 : block.chainid,
+                block.chainid,
                 _proxy,
                 nonceTracker.useNonce(),
                 ERC1967Utils.getImplementation(),

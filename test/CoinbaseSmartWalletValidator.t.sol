@@ -58,7 +58,7 @@ contract CoinbaseSmartWalletValidatorTest is Test {
             _signSetImplementationData(_EOA_PRIVATE_KEY, initArgs, address(_implementation), address(_validator));
 
         // Should not revert
-        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature, true);
+        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature);
     }
 
     function test_succeeds_whenWalletHasMultipleOwners() public {
@@ -73,7 +73,7 @@ contract CoinbaseSmartWalletValidatorTest is Test {
             _signSetImplementationData(_EOA_PRIVATE_KEY, initArgs, address(_implementation), address(_validator));
 
         // Should not revert
-        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature, true);
+        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature);
     }
 
     function test_reverts_whenWalletHasNoOwners() public {
@@ -84,7 +84,7 @@ contract CoinbaseSmartWalletValidatorTest is Test {
             _signSetImplementationData(_EOA_PRIVATE_KEY, initArgs, address(_implementation), address(_validator));
 
         vm.expectRevert(CoinbaseSmartWalletValidator.Unintialized.selector);
-        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature, true);
+        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature);
     }
 
     function test_succeeds_whenWalletHadOwnersButLastOwnerRemoved() public {
@@ -92,7 +92,7 @@ contract CoinbaseSmartWalletValidatorTest is Test {
         bytes memory initArgs = _createInitArgs(_newOwner);
         bytes memory signature =
             _signSetImplementationData(_EOA_PRIVATE_KEY, initArgs, address(_implementation), address(_validator));
-        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature, true);
+        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature);
 
         // Now remove the owner through the wallet interface
         vm.prank(_newOwner);
@@ -138,7 +138,7 @@ contract CoinbaseSmartWalletValidatorTest is Test {
                 IAccountStateValidator.InvalidImplementation.selector, address(differentImpl), address(_implementation)
             )
         );
-        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(validator), signature, true);
+        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(validator), signature);
     }
 
     // Helper functions from coinbaseImplementation.t.sol
@@ -167,7 +167,7 @@ contract CoinbaseSmartWalletValidatorTest is Test {
         bytes32 initHash = keccak256(
             abi.encode(
                 _IMPLEMENTATION_SET_TYPEHASH,
-                0, // chainId 0 for cross-chain
+                block.chainid,
                 _proxy,
                 _nonceTracker.nonces(_eoa),
                 _getERC1967Implementation(address(_eoa)),

@@ -85,21 +85,10 @@ contract FailingImplementationTest is IsValidSignatureTestBase {
 
         // Initialize with implementation
         bytes memory initArgs = _createInitArgs(_newOwner);
-        bytes memory signature = _signSetImplementationData(
-            _EOA_PRIVATE_KEY,
-            address(_implementation),
-            0, // chainId 0 for cross-chain
-            initArgs,
-            address(_validator)
-        );
+        bytes memory signature =
+            _signSetImplementationData(_EOA_PRIVATE_KEY, address(_implementation), initArgs, address(_validator));
 
-        EIP7702Proxy(_eoa).setImplementation(
-            address(_implementation),
-            initArgs,
-            address(_validator),
-            signature,
-            true // Allow cross-chain replay for tests
-        );
+        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature);
 
         super.setUp();
     }
@@ -188,15 +177,10 @@ contract SucceedingImplementationTest is IsValidSignatureTestBase {
 
         // Initialize with implementation
         bytes memory initArgs = _createInitArgs(_newOwner);
-        bytes memory signature = _signSetImplementationData(
-            _EOA_PRIVATE_KEY,
-            address(_implementation),
-            0, // chainId 0 for cross-chain
-            initArgs,
-            address(_validator)
-        );
+        bytes memory signature =
+            _signSetImplementationData(_EOA_PRIVATE_KEY, address(_implementation), initArgs, address(_validator));
 
-        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature, true);
+        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature);
 
         super.setUp();
     }
@@ -232,15 +216,10 @@ contract RevertingImplementationTest is IsValidSignatureTestBase {
 
         // Initialize with implementation
         bytes memory initArgs = _createInitArgs(_newOwner);
-        bytes memory signature = _signSetImplementationData(
-            _EOA_PRIVATE_KEY,
-            address(_implementation),
-            0, // chainId 0 for cross-chain
-            initArgs,
-            address(_validator)
-        );
+        bytes memory signature =
+            _signSetImplementationData(_EOA_PRIVATE_KEY, address(_implementation), initArgs, address(_validator));
 
-        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature, true);
+        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature);
 
         super.setUp();
     }
@@ -289,15 +268,10 @@ contract ExtraDataTest is IsValidSignatureTestBase {
 
         // Initialize with implementation
         bytes memory initArgs = _createInitArgs(_newOwner);
-        bytes memory signature = _signSetImplementationData(
-            _EOA_PRIVATE_KEY,
-            address(_implementation),
-            0, // chainId 0 for cross-chain
-            initArgs,
-            address(_validator)
-        );
+        bytes memory signature =
+            _signSetImplementationData(_EOA_PRIVATE_KEY, address(_implementation), initArgs, address(_validator));
 
-        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature, true);
+        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature);
 
         super.setUp();
     }
