@@ -5,7 +5,6 @@ import {EIP7702Proxy} from "../../src/EIP7702Proxy.sol";
 import {NonceTracker} from "../../src/NonceTracker.sol";
 
 import {ECDSA} from "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
-// import {ERC1967Utils} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Utils.sol";
 import {IERC1967} from "openzeppelin-contracts/contracts/interfaces/IERC1967.sol";
 
 import {EIP7702ProxyBase} from "../base/EIP7702ProxyBase.sol";
