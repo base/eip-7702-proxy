@@ -19,12 +19,6 @@ contract CoinbaseSmartWalletValidator is IAccountStateValidator {
         _supportedImplementation = supportedImplementation;
     }
 
-    function supportedImplementations() external view override returns (address[] memory) {
-        address[] memory implementations = new address[](1);
-        implementations[0] = address(_supportedImplementation);
-        return implementations;
-    }
-
     /// @inheritdoc IAccountStateValidator
     ///
     /// @dev Mimics the exact logic used in `CoinbaseSmartWallet.initialize` for consistency

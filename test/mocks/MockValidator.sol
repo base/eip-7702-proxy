@@ -19,12 +19,6 @@ contract MockValidator is IAccountStateValidator {
         expectedImplementation = _expectedImplementation;
     }
 
-    function supportedImplementations() external view returns (address[] memory) {
-        address[] memory implementations = new address[](1);
-        implementations[0] = address(expectedImplementation);
-        return implementations;
-    }
-
     /**
      * @dev Validates that the wallet is initialized
      * @param wallet Address of the wallet to validate

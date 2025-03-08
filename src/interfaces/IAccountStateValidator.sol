@@ -12,9 +12,6 @@ interface IAccountStateValidator {
     /// @notice Error thrown when the implementation provided to `validateAccountState` is not a supported implementation
     error InvalidImplementation(address actual);
 
-    /// @notice Returns an array of implementations this validator is capable of validating
-    function supportedImplementations() external view returns (address[] memory);
-
     /// @notice Validates that an account is in a valid state
     /// @dev Should return ACCOUNT_STATE_VALIDATION_SUCCESS if account state is valid, otherwise revert
     /// @dev Should validate that the provided implementation is a supported implementation for this validator

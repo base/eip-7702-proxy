@@ -108,21 +108,6 @@ contract CoinbaseSmartWalletValidatorTest is Test {
         assertGt(CoinbaseSmartWallet(payable(_eoa)).nextOwnerIndex(), 0);
     }
 
-    function test_supportedImplementations_returnsExpectedImplementation() public {
-        // Deploy a new implementation and validator
-        CoinbaseSmartWallet newImplementation = new CoinbaseSmartWallet();
-        CoinbaseSmartWalletValidator validator = new CoinbaseSmartWalletValidator(newImplementation);
-
-        address[] memory actualImplementations = new address[](1);
-        actualImplementations[0] = address(newImplementation);
-        // Check that supportedImplementations returns the expected address
-        assertEq(
-            validator.supportedImplementations(),
-            actualImplementations,
-            "Supported implementation should match constructor argument"
-        );
-    }
-
     function test_reverts_whenImplementationDoesNotMatch() public {
         // Deploy a different implementation
         CoinbaseSmartWallet differentImpl = new CoinbaseSmartWallet();
