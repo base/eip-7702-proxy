@@ -4,13 +4,14 @@ pragma solidity ^0.8.23;
 import {EIP7702Proxy} from "../../src/EIP7702Proxy.sol";
 import {NonceTracker} from "../../src/NonceTracker.sol";
 
-import {ECDSA} from "openzeppelin-contracts/contracts/utils/cryptography/ECDSA.sol";
 import {IERC1967} from "openzeppelin-contracts/contracts/interfaces/IERC1967.sol";
 
 import {EIP7702ProxyBase} from "../base/EIP7702ProxyBase.sol";
 import {MockImplementation} from "../mocks/MockImplementation.sol";
 import {MockRevertingValidator} from "../mocks/MockRevertingValidator.sol";
-import {IAccountStateValidator} from "../../src/interfaces/IAccountStateValidator.sol";
+import {
+    IAccountStateValidator, ACCOUNT_STATE_VALIDATION_SUCCESS
+} from "../../src/interfaces/IAccountStateValidator.sol";
 import {MockValidator} from "../mocks/MockValidator.sol";
 import {MockInvalidValidator} from "../mocks/MockInvalidValidator.sol";
 import {MockMaliciousImplementation} from "../mocks/MockMaliciousImplementation.sol";

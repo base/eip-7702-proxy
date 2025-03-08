@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 /// @dev Magic value returned by validateAccountState on success
-bytes4 constant ACCOUNT_STATE_VALIDATION_SUCCESS = 0x61014884; // bytes4(keccak256("validateAccountState(address,address)"))
+bytes4 constant ACCOUNT_STATE_VALIDATION_SUCCESS = 0xccd10cc8; // bytes4(keccak256("validateAccountState(address,address)"))
 
 /// @title IAccountStateValidator
 /// @notice Interface for account-specific validation logi
