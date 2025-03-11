@@ -15,7 +15,7 @@ import {CoinbaseSmartWalletValidator} from "../src/validators/CoinbaseSmartWalle
  * @dev Before deploying contracts, make sure dependencies have been installed at the latest or otherwise specific
  * versions using `forge install [OPTIONS] [DEPENDENCIES]`.
  *
- * forge script scripts/Deploy.s.sol:Deploy --account dev --sender $SENDER --rpc-url $BASE_SEPOLIA_RPC --verify --verifier-url $BASE_SEPOLIA_BLOCKSCOUT_API --etherscan-api-key $BASESCAN_API_KEY --broadcast -vvvv
+ * forge script scripts/Deploy.s.sol:Deploy --account odyssey-deployer --sender $SENDER --rpc-url $ODYSSEY_RPC --broadcast -vvvv
  */
 contract Deploy is Script {
     function run() external {
