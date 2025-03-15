@@ -29,7 +29,7 @@ contract MockValidator is IAccountStateValidator {
             revert InvalidImplementation(implementation);
         }
 
-        bool isInitialized = MockImplementation(wallet).initialized();
+        bool isInitialized = MockImplementation(payable(wallet)).initialized();
         if (!isInitialized) revert WalletNotInitialized();
         return ACCOUNT_STATE_VALIDATION_SUCCESS;
     }

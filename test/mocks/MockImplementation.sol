@@ -2,12 +2,13 @@
 pragma solidity ^0.8.23;
 
 import {UUPSUpgradeable} from "solady/utils/UUPSUpgradeable.sol";
+import {Receiver} from "solady/accounts/Receiver.sol";
 
 /**
  * @title MockImplementation
  * @dev Base mock implementation for testing EIP7702Proxy
  */
-contract MockImplementation is UUPSUpgradeable {
+contract MockImplementation is UUPSUpgradeable, Receiver {
     bytes4 constant ERC1271_MAGIC_VALUE = 0x1626ba7e;
 
     address public owner;
@@ -57,7 +58,7 @@ contract MockImplementation is UUPSUpgradeable {
     /**
      * @dev Implementation of UUPS upgrade authorization
      */
-    function _authorizeUpgrade(address) internal view virtual override onlyOwner {}
+    function _authorizeUpgrade(address) internal view virtual override {}
 
     /**
      * @dev Mock function that returns arbitrary bytes data
