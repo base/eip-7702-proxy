@@ -15,6 +15,7 @@ contract MultiOwnableStorageEraserTest is Test {
 
     uint256 constant _NEW_OWNER_PRIVATE_KEY = 0xB0B;
     address payable _newOwner;
+    address payable _secondOwner;
 
     CoinbaseSmartWallet _wallet;
     CoinbaseSmartWallet _cbswImplementation;
@@ -34,6 +35,7 @@ contract MultiOwnableStorageEraserTest is Test {
         // Set up test accounts
         _eoa = payable(vm.addr(_EOA_PRIVATE_KEY));
         _newOwner = payable(vm.addr(_NEW_OWNER_PRIVATE_KEY));
+        _secondOwner = payable(vm.addr(0xBEEF));
 
         // Deploy core contracts
         _cbswImplementation = new CoinbaseSmartWallet();
@@ -76,17 +78,13 @@ contract MultiOwnableStorageEraserTest is Test {
         vm.etch(_eoa, proxyCode);
 
         // Verify storage was erased
-        assertEq(
-            CoinbaseSmartWallet(payable(_eoa)).nextOwnerIndex(),
-            0,
-            "nextOwnerIndex should be erased to 0"
-        );
+        assertEq(CoinbaseSmartWallet(payable(_eoa)).nextOwnerIndex(), 0, "nextOwnerIndex should be erased to 0");
 
         // Evil new owner can initialize wallet
         uint256 evilNewPrivateKey = 0xBADBADBAD;
         address payable evilNewOwner = payable(vm.addr(evilNewPrivateKey));
 
-        bytes[] memory owners = new bytes[](1); 
+        bytes[] memory owners = new bytes[](1);
         owners[0] = abi.encode(evilNewOwner);
         vm.prank(evilNewOwner); // prove this call can come from whoever
         CoinbaseSmartWallet(payable(_eoa)).initialize(owners);
@@ -108,9 +106,10 @@ contract MultiOwnableStorageEraserTest is Test {
         _wallet = CoinbaseSmartWallet(payable(_eoa));
     }
 
-    function _createInitArgs(address owner) internal pure returns (bytes memory) {
-        bytes[] memory owners = new bytes[](1);
+    function _createInitArgs(address owner) internal view returns (bytes memory) {
+        bytes[] memory owners = new bytes[](2);
         owners[0] = abi.encode(owner);
+        owners[1] = abi.encode(_secondOwner);
         bytes memory ownerArgs = abi.encode(owners);
         return abi.encodePacked(CoinbaseSmartWallet.initialize.selector, ownerArgs);
     }
