@@ -64,6 +64,7 @@ contract DelegateTest is EIP7702ProxyBase {
             address(newImplementation),
             "", // no init data needed
             address(newImplementationValidator),
+            type(uint256).max,
             signature,
             true
         );

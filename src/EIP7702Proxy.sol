@@ -45,6 +45,9 @@ contract EIP7702Proxy is Proxy {
     /// @notice Validator did not return ACCOUNT_STATE_VALIDATION_SUCCESS
     error InvalidValidation();
 
+    /// @notice Signature has expired
+    error SignatureExpired();
+
     /// @notice Initializes the proxy with a default receiver implementation and an external nonce tracker
     ///
     /// @param nonceTracker_ The address of the nonce tracker contract
@@ -72,9 +75,12 @@ contract EIP7702Proxy is Proxy {
         address newImplementation,
         bytes calldata callData,
         address validator,
+        uint256 expiry,
         bytes calldata signature,
         bool allowCrossChainReplay
     ) external {
+        if (block.timestamp > expiry) revert SignatureExpired();
+
         // Construct hash using typehash to prevent signature collisions
         bytes32 hash = keccak256(
             abi.encode(
@@ -85,7 +91,8 @@ contract EIP7702Proxy is Proxy {
                 ERC1967Utils.getImplementation(),
                 newImplementation,
                 keccak256(callData),
-                validator
+                validator,
+                expiry
             )
         );
 

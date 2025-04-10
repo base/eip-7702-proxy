@@ -72,6 +72,7 @@ contract CoinbaseImplementationTest is Test {
             address(_cbswImplementation),
             initArgs,
             address(_cbswValidator),
+            type(uint256).max,
             signature,
             true // Allow cross-chain replay for tests
         );
@@ -107,7 +108,8 @@ contract CoinbaseImplementationTest is Test {
                 _getERC1967Implementation(address(_eoa)),
                 address(_cbswImplementation),
                 keccak256(initArgs),
-                address(_cbswValidator)
+                address(_cbswValidator),
+                type(uint256).max // default to max expiry
             )
         );
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(signerPk, initHash);
@@ -233,7 +235,7 @@ contract CoinbaseImplementationTest is Test {
 
         vm.expectRevert(CoinbaseSmartWallet.Initialized.selector);
         EIP7702Proxy(_eoa).setImplementation(
-            address(_cbswImplementation), initArgs, address(_cbswValidator), signature, true
+            address(_cbswImplementation), initArgs, address(_cbswValidator), type(uint256).max, signature, true
         );
     }
 }

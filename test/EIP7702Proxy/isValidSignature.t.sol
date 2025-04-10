@@ -97,6 +97,7 @@ contract FailingImplementationTest is IsValidSignatureTestBase {
             address(_implementation),
             initArgs,
             address(_validator),
+            type(uint256).max,
             signature,
             true // Allow cross-chain replay for tests
         );
@@ -196,8 +197,9 @@ contract SucceedingImplementationTest is IsValidSignatureTestBase {
             address(_validator)
         );
 
-        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature, true);
-
+        EIP7702Proxy(_eoa).setImplementation(
+            address(_implementation), initArgs, address(_validator), type(uint256).max, signature, true
+        );
         super.setUp();
     }
 
@@ -240,7 +242,9 @@ contract RevertingImplementationTest is IsValidSignatureTestBase {
             address(_validator)
         );
 
-        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature, true);
+        EIP7702Proxy(_eoa).setImplementation(
+            address(_implementation), initArgs, address(_validator), type(uint256).max, signature, true
+        );
 
         super.setUp();
     }
@@ -297,7 +301,9 @@ contract ExtraDataTest is IsValidSignatureTestBase {
             address(_validator)
         );
 
-        EIP7702Proxy(_eoa).setImplementation(address(_implementation), initArgs, address(_validator), signature, true);
+        EIP7702Proxy(_eoa).setImplementation(
+            address(_implementation), initArgs, address(_validator), type(uint256).max, signature, true
+        );
 
         super.setUp();
     }
