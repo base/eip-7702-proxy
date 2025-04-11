@@ -192,7 +192,8 @@ contract SetImplementationTest is EIP7702ProxyBase {
                 _getERC1967Implementation(_eoa),
                 address(_implementation),
                 keccak256(initArgs),
-                address(_validator)
+                address(_validator),
+                type(uint256).max
             )
         );
 
@@ -357,7 +358,8 @@ contract SetImplementationTest is EIP7702ProxyBase {
                 _getERC1967Implementation(_eoa),
                 address(_implementation),
                 keccak256(""),
-                address(_validator)
+                address(_validator),
+                type(uint256).max
             )
         );
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(wrongPk, messageHash);
@@ -481,7 +483,8 @@ contract SetImplementationTest is EIP7702ProxyBase {
                 _getERC1967Implementation(_eoa),
                 address(_implementation),
                 keccak256(initArgs),
-                address(_validator)
+                address(_validator),
+                type(uint256).max
             )
         );
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(_EOA_PRIVATE_KEY, initHash);
@@ -529,7 +532,8 @@ contract SetImplementationTest is EIP7702ProxyBase {
                 address(wrongCurrentImpl), // wrong current implementation
                 address(_implementation),
                 keccak256(initArgs),
-                address(_validator)
+                address(_validator),
+                type(uint256).max
             )
         );
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(_EOA_PRIVATE_KEY, initHash);

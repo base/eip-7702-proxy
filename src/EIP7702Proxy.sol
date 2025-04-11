@@ -24,7 +24,7 @@ contract EIP7702Proxy is Proxy {
 
     /// @notice Typehash for setting implementation
     bytes32 internal constant _IMPLEMENTATION_SET_TYPEHASH = keccak256(
-        "EIP7702ProxyImplementationSet(uint256 chainId,address proxy,uint256 nonce,address currentImplementation,address newImplementation,bytes callData,address validator)"
+        "EIP7702ProxyImplementationSet(uint256 chainId,address proxy,uint256 nonce,address currentImplementation,address newImplementation,bytes callData,address validator,uint256 expiry)"
     );
 
     /// @notice Address of the global nonce tracker for initialization

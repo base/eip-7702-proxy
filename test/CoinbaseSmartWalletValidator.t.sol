@@ -27,7 +27,7 @@ contract CoinbaseSmartWalletValidatorTest is Test {
     bytes32 internal constant _IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
     bytes32 _IMPLEMENTATION_SET_TYPEHASH = keccak256(
-        "EIP7702ProxyImplementationSet(uint256 chainId,address proxy,uint256 nonce,address currentImplementation,address newImplementation,bytes callData,address validator)"
+        "EIP7702ProxyImplementationSet(uint256 chainId,address proxy,uint256 nonce,address currentImplementation,address newImplementation,bytes callData,address validator,uint256 expiry)"
     );
 
     function setUp() public {
