@@ -79,7 +79,7 @@ contract EIP7702Proxy is Proxy {
         bytes calldata signature,
         bool allowCrossChainReplay
     ) external {
-        if (block.timestamp > expiry) revert SignatureExpired();
+        if (block.timestamp >= expiry) revert SignatureExpired();
 
         // Construct hash using typehash to prevent signature collisions
         bytes32 hash = keccak256(
