@@ -1,9 +1,8 @@
 #!/bin/bash
 # mine_salts.sh
 
-# Start and end ranges for this mining session
-start_salt=11818000 # Take start as first argument // left off on 11818000
-batch_size=1500  # How many salts to try in each forge script run // 1500
+start_salt=10
+batch_size=2000  # How many salts to try in each forge script run
 
 if [ -z "$start_salt" ]; then
     start_salt=0

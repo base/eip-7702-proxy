@@ -8,6 +8,11 @@ import {EIP7702Proxy} from "../src/EIP7702Proxy.sol";
 import {NonceTracker} from "../src/NonceTracker.sol";
 import {DefaultReceiver} from "../src/DefaultReceiver.sol";
 
+/**
+ * Things that would make this more efficient:
+ * - Use a more efficient prefix search algorithm
+ * - Store the computed initcodehash in the contract and just use that
+ */
 contract MineSaltScript is Script, StdAssertions {
     using LibString for bytes;
 
@@ -18,36 +23,21 @@ contract MineSaltScript is Script, StdAssertions {
     // string[] prefixesToTry = ["432e"]; // proof that a matching one works
     string[] prefixesToTry = ["cb7702", "e147702", "7702cb"];
 
-    function getProxyInitCodeHash() internal pure returns (bytes32) {
+    function getProxyInitCodeHash() internal view returns (bytes32) {
         // First get predicted addresses for dependencies
-        bytes32 ntInitCodeHash = keccak256(type(NonceTracker).creationCode);
-        bytes32 recvInitCodeHash = keccak256(type(DefaultReceiver).creationCode);
-
-        // Predict their addresses based on our fixed salt
-        address predictedNonceTracker = address(
-            uint160(
-                uint256(
-                    keccak256(
-                        abi.encodePacked(bytes1(0xff), CREATE2_DEPLOYER, DEPENDENCY_DEPLOYMENT_SALT, ntInitCodeHash)
-                    )
-                )
-            )
+        address predictedNonceTracker = vm.computeCreate2Address(
+            DEPENDENCY_DEPLOYMENT_SALT, keccak256(type(NonceTracker).creationCode), CREATE2_DEPLOYER
         );
 
-        address predictedReceiver = address(
-            uint160(
-                uint256(
-                    keccak256(
-                        abi.encodePacked(bytes1(0xff), CREATE2_DEPLOYER, DEPENDENCY_DEPLOYMENT_SALT, recvInitCodeHash)
-                    )
-                )
-            )
+        address predictedReceiver = vm.computeCreate2Address(
+            DEPENDENCY_DEPLOYMENT_SALT, keccak256(type(DefaultReceiver).creationCode), CREATE2_DEPLOYER
         );
 
         // Get the proxy's init code hash with these predicted addresses
         bytes memory creationCode = type(EIP7702Proxy).creationCode;
         bytes memory constructorArgs = abi.encode(predictedNonceTracker, predictedReceiver);
         return keccak256(bytes.concat(creationCode, constructorArgs));
+        // return bytes32(0x6094cd1d5583cb4a8981fad8a28d236ca0e8b19f4520007f2b5c97fef6f6b2b8);
     }
 
     function tryMineSaltRange(uint256 startSalt, uint256 batchSize)
@@ -107,7 +97,11 @@ contract MineSaltScript is Script, StdAssertions {
     function run() public {
         // Get salt range from environment
         uint256 startSalt = vm.envOr("SALT_START", uint256(0));
-        uint256 batchSize = vm.envOr("SALT_BATCH", uint256(1000000));
+        uint256 batchSize = vm.envOr("SALT_BATCH", uint256(2000));
+
+        // Print the initcodehash that will be used for CREATE2
+        bytes32 initCodeHash = getProxyInitCodeHash();
+        console2.log("Proxy InitCodeHash:", vm.toString(initCodeHash));
 
         console2.log("Mining salts from", startSalt, "to", startSalt + batchSize);
 

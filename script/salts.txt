@@ -1,0 +1,82 @@
+
+compiler settings:
+via_ir = true
+no optimizer
+
+initcodehash: 0x3da83878dc55281cacd7568ad904287dc35b624b51d95a6fbd4a62009e58965a
+
+salt: 
+  Mining salts from 319000 to 320000
+  FOUND! Salt: 319749 Address: 0x77026BB38406dBED2ae70C86ae1D27a0222d5Ce0
+
+  Mining salts from 352000 to 353000
+  FOUND! Salt: 352061 Address: 0x77028E85d3f48B1BCB93ddE24b657380A79F542D
+Found a matching salt! Check the output above.
+
+
+== Logs ==
+  Mining salts from 3793000 to 3794500
+  FOUND! Salt: 3794177 Address: 0x7702cB29A28247E80490Fc2D2E01389db666c897
+Found a matching salt! Check the output above.
+
+  Mining salts from 11816500 to 11818000
+  FOUND! Salt: 11817227 Address: 0x7702cb009F8627a5ea20EE3c763765faC971B1eb
+Found a matching salt! Check the output above.
+
+
+===================================================================
+compiler settings:
+via_ir = true
+optimizer=true
+optimizer_runs = 20000
+
+initcodehash: 0x6094cd1d5583cb4a8981fad8a28d236ca0e8b19f4520007f2b5c97fef6f6b2b8
+
+== Logs ==
+  Mining salts from 1500 to 3000
+  FOUND! Salt: 2490 Address: 0x7702BeB5E680753a4921E4410c8360B09c6f77A9
+Found a matching salt! Check the output above.
+== Logs ==
+  Mining salts from 58000 to 60000
+  FOUND! Salt: 58030 Address: 0x077026d4923BBCE34C4f5e595159777864D3BE95
+Found a matching salt! Check the output above.
+
+== Logs ==
+  Mining salts from 88000 to 90000
+  FOUND! Salt: 89557 Address: 0x77023720f6BECd5c2e91F70CEfFA50E02f6721dF
+Found a matching salt! Check the output above.
+
+== Logs ==
+  Mining salts from 136000 to 138000
+  FOUND! Salt: 136913 Address: 0x7702c2714609A22866A1953749FDa223dB4d8686
+Found a matching salt! Check the output above.
+
+
+
+== Logs ==
+  Mining salts from 312000 to 314000
+  FOUND! Salt: 313309 Address: 0x7702b2309165D4ea1bc90eDa1e961EDFB9b5025F
+Found a matching salt! Check the output above.
+
+
+== Logs ==
+  Mining salts from 2012000 to 2014000
+  FOUND! Salt: 2013478 Address: 0xb7702B76402a60B00c316258178b7a1FA41A6A1a
+Found a matching salt! Check the output above.
+
+
+== Logs ==
+  Mining salts from 2614000 to 2616000
+  FOUND! Salt: 2615328 Address: 0xc77020488e30337D94B512cBaDd9ab5905226Ce2
+Found a matching salt! Check the output above.
+
+== Logs ==
+  Mining salts from 16564000 to 16566000
+  FOUND! Salt: 16564773 Address: 0x7702Cb86279d27Ed28ef1b70A1795e0584A5Df98
+Found a matching salt! Check the output above.
+
+
+== Logs ==
+  Mining salts from 23662000 to 23664000
+  FOUND! Salt: 23662924 Address: 0x7702cb554e6bFb442cb743A7dF23154544a7176C
+Found a matching salt! Check the output above.
