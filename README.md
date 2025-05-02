@@ -67,3 +67,12 @@ Now the EOA has been upgraded to the smart account implementation and had its st
 
 If the smart account implementation supports UUPS upgradeability, it will work as designed by submitting upgrade calls to the account.
 
+## Security
+
+Audited by [Spearbit](https://spearbit.com/).
+
+| Audit | Date | Report |
+|--------|---------|---------|
+| First private audit | 02/03/2025 | [Report](audits/Cantina-February-2025.pdf) |
+| Second private audit | 03/05/2025 | [Report](audits/Cantina-March-2025.pdf) |
+| Public competition | 04/13/2025| [Report](audits/Cantina-Competition-April-2025.pdf) |
