@@ -34,19 +34,25 @@ contract Deploy is Script {
     }
 
     function deploy() internal {
+        // CoinbaseSmartWalletValidator coinbaseSmartWalletValidator =
+        //     new CoinbaseSmartWalletValidator{salt: DEPENDENCY_DEPLOYMENT_SALT}(COINBASE_SMART_WALLET_IMPLEMENTATION);
+        // NonceTracker nonceTracker = new NonceTracker{salt: DEPENDENCY_DEPLOYMENT_SALT}();
+        // DefaultReceiver defaultReceiver = new DefaultReceiver{salt: DEPENDENCY_DEPLOYMENT_SALT}();
+
         CoinbaseSmartWalletValidator coinbaseSmartWalletValidator =
-            new CoinbaseSmartWalletValidator{salt: DEPENDENCY_DEPLOYMENT_SALT}(COINBASE_SMART_WALLET_IMPLEMENTATION);
-        NonceTracker nonceTracker = new NonceTracker{salt: DEPENDENCY_DEPLOYMENT_SALT}();
-        DefaultReceiver defaultReceiver = new DefaultReceiver{salt: DEPENDENCY_DEPLOYMENT_SALT}();
+            CoinbaseSmartWalletValidator(0x79A33f950b90C7d07E66950daedf868BD0cDcF96);
+        NonceTracker nonceTracker = NonceTracker(0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8);
+        DefaultReceiver defaultReceiver = DefaultReceiver(payable(0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9));
+
         EIP7702Proxy proxy = new EIP7702Proxy{salt: PROXY_DEPLOYMENT_SALT}({
             nonceTracker_: address(nonceTracker),
             receiver: address(defaultReceiver)
         });
 
-        logAddress("CoinbaseSmartWalletValidator", address(coinbaseSmartWalletValidator));
-        logAddress("NonceTracker", address(nonceTracker));
-        logAddress("DefaultReceiver", address(defaultReceiver));
-        logAddress("EIP7702Proxy", address(proxy));
+        logAddress("CoinbaseSmartWalletValidator", address(coinbaseSmartWalletValidator)); // 0x79A33f950b90C7d07E66950daedf868BD0cDcF96
+        logAddress("NonceTracker", address(nonceTracker)); // 0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8
+        logAddress("DefaultReceiver", address(defaultReceiver)); // 0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9
+        logAddress("EIP7702Proxy", address(proxy)); // 0x7702cb554e6bFb442cb743A7dF23154544a7176C
     }
 
     function logAddress(string memory name, address addr) internal pure {
