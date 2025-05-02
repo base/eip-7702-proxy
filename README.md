@@ -1,7 +1,5 @@
 # EIP-7702 Proxy
 
-> ⚠️ These contracts are unaudited prototypes and may contain serious vulnerabilities. DO NOT USE IN PRODUCTION.
-
 A secure ERC-1967 proxy implementation for EIP-7702 smart accounts.
 
 ## Overview
