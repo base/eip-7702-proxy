@@ -1,0 +1,129 @@
+
+ADDRESSES:
+0x79A33f950b90C7d07E66950daedf868BD0cDcF96 CoinbaseSmartWalletValidator
+0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8 NonceTracker
+0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9 DefaultReceiver
+0x7702cb554e6bFb442cb743A7dF23154544a7176C EIP7702Proxy
+
+ARBITRUM SEPOLIA verifications =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+// CoinbaseSmartWalletValidator
+forge verify-contract --chain-id 421614 --num-of-optimizations 20000 --watch --constructor-args $(cast abi-encode "constructor(address)" "0x000100abaad02f1cfC8Bbe32bD5a564817339E72") --etherscan-api-key $ARBISCAN_API_KEY --compiler-version v0.8.23 0x79A33f950b90C7d07E66950daedf868BD0cDcF96 CoinbaseSmartWalletValidator --verifier-url $ARBITRUM_SEPOLIA_ETHERSCAN_API
+
+// NonceTracker
+forge verify-contract --chain-id 421614 --num-of-optimizations 20000 --watch --etherscan-api-key $ARBISCAN_API_KEY --compiler-version v0.8.23 0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8 NonceTracker --verifier-url $ARBITRUM_SEPOLIA_ETHERSCAN_API
+
+// DefaultReceiver
+forge verify-contract --chain-id 421614 --num-of-optimizations 20000 --watch --etherscan-api-key $ARBISCAN_API_KEY --compiler-version v0.8.23 0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9 DefaultReceiver --verifier-url $ARBITRUM_SEPOLIA_ETHERSCAN_API
+
+// EIP7702Proxy
+forge verify-contract --chain-id 421614 --num-of-optimizations 20000 --watch --constructor-args $(cast abi-encode "constructor(address,address)" "0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8" "0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9") --etherscan-api-key $ARBISCAN_API_KEY --compiler-version v0.8.23 0x7702cb554e6bFb442cb743A7dF23154544a7176C EIP7702Proxy --verifier-url $ARBITRUM_SEPOLIA_ETHERSCAN_API 
+
+BASE SEPOLIA verifications =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+
+// CoinbaseSmartWalletValidator
+forge verify-contract --chain-id 84532 --num-of-optimizations 20000 --watch --constructor-args $(cast abi-encode "constructor(address)" "0x000100abaad02f1cfC8Bbe32bD5a564817339E72") --etherscan-api-key $BASESCAN_API_KEY --compiler-version v0.8.23 0x79A33f950b90C7d07E66950daedf868BD0cDcF96 CoinbaseSmartWalletValidator --verifier-url https://api-sepolia.basescan.org/api
+
+// NonceTracker
+forge verify-contract --chain-id 84532 --num-of-optimizations 20000 --watch --etherscan-api-key $BASESCAN_API_KEY --compiler-version v0.8.23 0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8 NonceTracker --verifier-url https://api-sepolia.basescan.org/api
+
+// DefaultReceiver
+forge verify-contract --chain-id 84532 --num-of-optimizations 20000 --watch --etherscan-api-key $BASESCAN_API_KEY --compiler-version v0.8.23 0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9 DefaultReceiver --verifier-url https://api-sepolia.basescan.org/api
+
+// EIP7702Proxy
+forge verify-contract --chain-id 84532 --num-of-optimizations 20000 --watch --constructor-args $(cast abi-encode "constructor(address,address)" "0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8" "0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9") --etherscan-api-key $BASESCAN_API_KEY --compiler-version v0.8.23 0x7702cb554e6bFb442cb743A7dF23154544a7176C EIP7702Proxy --verifier-url https://api-sepolia.basescan.org/api
+
+ETHEREUM SEPOLIA verifications =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+// CoinbaseSmartWalletValidator
+forge verify-contract --chain-id 11155111 --num-of-optimizations 20000 --watch --constructor-args $(cast abi-encode "constructor(address)" "0x000100abaad02f1cfC8Bbe32bD5a564817339E72") --etherscan-api-key $ETHERSCAN_API_KEY --compiler-version v0.8.23 0x79A33f950b90C7d07E66950daedf868BD0cDcF96 CoinbaseSmartWalletValidator --verifier-url $ETHEREUM_SEPOLIA_ETHERSCAN_API
+
+// NonceTracker
+forge verify-contract --chain-id 11155111 --num-of-optimizations 20000 --watch --etherscan-api-key $ETHERSCAN_API_KEY --compiler-version v0.8.23 0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8 NonceTracker --verifier-url $ETHEREUM_SEPOLIA_ETHERSCAN_API
+
+// DefaultReceiver
+forge verify-contract --chain-id 11155111 --num-of-optimizations 20000 --watch --etherscan-api-key $ETHERSCAN_API_KEY --compiler-version v0.8.23 0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9 DefaultReceiver --verifier-url $ETHEREUM_SEPOLIA_ETHERSCAN_API
+
+// EIP7702Proxy
+forge verify-contract --chain-id 11155111 --num-of-optimizations 20000 --watch --constructor-args $(cast abi-encode "constructor(address,address)" "0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8" "0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9") --etherscan-api-key $ETHERSCAN_API_KEY --compiler-version v0.8.23 0x7702cb554e6bFb442cb743A7dF23154544a7176C EIP7702Proxy --verifier-url $ETHEREUM_SEPOLIA_ETHERSCAN_API 
+
+OPTIMISM SEPOLIA verifications =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+// CoinbaseSmartWalletValidator
+forge verify-contract --chain-id 11155420 --num-of-optimizations 20000 --watch --constructor-args $(cast abi-encode "constructor(address)" "0x000100abaad02f1cfC8Bbe32bD5a564817339E72") --etherscan-api-key $OPTIMISM_ETHERSCAN_API_KEY --compiler-version v0.8.23 0x79A33f950b90C7d07E66950daedf868BD0cDcF96 CoinbaseSmartWalletValidator --verifier-url $OPTIMISM_SEPOLIA_ETHERSCAN_API
+
+// NonceTracker
+forge verify-contract --chain-id 11155420 --num-of-optimizations 20000 --watch --etherscan-api-key $OPTIMISM_ETHERSCAN_API_KEY --compiler-version v0.8.23 0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8 NonceTracker --verifier-url $OPTIMISM_SEPOLIA_ETHERSCAN_API
+
+// DefaultReceiver
+forge verify-contract --chain-id 11155420 --num-of-optimizations 20000 --watch --etherscan-api-key $OPTIMISM_ETHERSCAN_API_KEY --compiler-version v0.8.23 0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9 DefaultReceiver --verifier-url $OPTIMISM_SEPOLIA_ETHERSCAN_API
+
+// EIP7702Proxy
+forge verify-contract --chain-id 11155420 --num-of-optimizations 20000 --watch --constructor-args $(cast abi-encode "constructor(address,address)" "0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8" "0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9") --etherscan-api-key $OPTIMISM_ETHERSCAN_API_KEY --compiler-version v0.8.23 0x7702cb554e6bFb442cb743A7dF23154544a7176C EIP7702Proxy --verifier-url $OPTIMISM_SEPOLIA_ETHERSCAN_API 
+
+Deploy + verify on AVALANCHE =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+forge script Deploy --account spmdeployer --sender $SPM_DEPLOYER --rpc-url $AVAX_RPC --verify --broadcast -vvvv
+
+Deploy + verify on BSC =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+forge script Deploy --account spmdeployer --sender $SPM_DEPLOYER --rpc-url $BSC_RPC --verify --verifier-url $BSCSCAN_API --etherscan-api-key $BSCSCAN_API_KEY --broadcast -vvvv
+
+Deploy + verify on POLYGON =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+forge script Deploy --account spmdeployer --sender $SPM_DEPLOYER --rpc-url $POLYGON_RPC --verify --verifier-url $POLYGONSCAN_API --etherscan-api-key $POLYGONSCAN_API_KEY --broadcast -vvvv
+
+Deploy + verify on ZORA =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+forge script Deploy --account spmdeployer --sender $SPM_DEPLOYER --rpc-url $ZORA_RPC --verify --verifier-url $ZORA_BLOCKSCOUT_API --broadcast -vvvv
+
+forge verify-contract --chain-id 7777777 --num-of-optimizations 20000 --watch --constructor-args $(cast abi-encode "constructor(address)" "0x000100abaad02f1cfC8Bbe32bD5a564817339E72") --compiler-version v0.8.23 0x79A33f950b90C7d07E66950daedf868BD0cDcF96 CoinbaseSmartWalletValidator --verifier-url $ZORA_BLOCKSCOUT_API
+
+OPTIMISM verifications =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+// CoinbaseSmartWalletValidator
+forge verify-contract --chain-id 10 --num-of-optimizations 20000 --watch --constructor-args $(cast abi-encode "constructor(address)" "0x000100abaad02f1cfC8Bbe32bD5a564817339E72") --etherscan-api-key $OPTIMISM_ETHERSCAN_API_KEY --compiler-version v0.8.23 0x79A33f950b90C7d07E66950daedf868BD0cDcF96 CoinbaseSmartWalletValidator --verifier-url $OPTIMISM_ETHERSCAN_API
+
+// NonceTracker
+forge verify-contract --chain-id 10 --num-of-optimizations 20000 --watch --etherscan-api-key $OPTIMISM_ETHERSCAN_API_KEY --compiler-version v0.8.23 0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8 NonceTracker --verifier-url $OPTIMISM_ETHERSCAN_API
+
+// DefaultReceiver
+forge verify-contract --chain-id 10 --num-of-optimizations 20000 --watch --etherscan-api-key $OPTIMISM_ETHERSCAN_API_KEY --compiler-version v0.8.23 0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9 DefaultReceiver --verifier-url $OPTIMISM_ETHERSCAN_API
+
+// EIP7702Proxy
+forge verify-contract --chain-id 10 --num-of-optimizations 20000 --watch --constructor-args $(cast abi-encode "constructor(address,address)" "0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8" "0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9") --etherscan-api-key $OPTIMISM_ETHERSCAN_API_KEY --compiler-version v0.8.23 0x7702cb554e6bFb442cb743A7dF23154544a7176C EIP7702Proxy --verifier-url $OPTIMISM_ETHERSCAN_API 
+
+ARBITRUM verifications =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+// CoinbaseSmartWalletValidator
+forge verify-contract --chain-id 42161 --num-of-optimizations 20000 --watch --constructor-args $(cast abi-encode "constructor(address)" "0x000100abaad02f1cfC8Bbe32bD5a564817339E72") --etherscan-api-key $ARBISCAN_API_KEY --compiler-version v0.8.23 0x79A33f950b90C7d07E66950daedf868BD0cDcF96 CoinbaseSmartWalletValidator --verifier-url $ARBISCAN_API
+
+// NonceTracker
+forge verify-contract --chain-id 42161 --num-of-optimizations 20000 --watch --etherscan-api-key $ARBISCAN_API_KEY --compiler-version v0.8.23 0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8 NonceTracker --verifier-url $ARBISCAN_API
+
+// DefaultReceiver
+forge verify-contract --chain-id 42161 --num-of-optimizations 20000 --watch --etherscan-api-key $ARBISCAN_API_KEY --compiler-version v0.8.23 0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9 DefaultReceiver --verifier-url $ARBISCAN_API
+
+// EIP7702Proxy
+forge verify-contract --chain-id 42161 --num-of-optimizations 20000 --watch --constructor-args $(cast abi-encode "constructor(address,address)" "0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8" "0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9") --etherscan-api-key $ARBISCAN_API_KEY --compiler-version v0.8.23 0x7702cb554e6bFb442cb743A7dF23154544a7176C EIP7702Proxy --verifier-url $ARBISCAN_API 
+
+
+ETHEREUM MAINNET verifications =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+// CoinbaseSmartWalletValidator
+forge verify-contract --chain-id 1 --num-of-optimizations 20000 --watch --constructor-args $(cast abi-encode "constructor(address)" "0x000100abaad02f1cfC8Bbe32bD5a564817339E72") --etherscan-api-key $ETHERSCAN_API_KEY --compiler-version v0.8.23 0x79A33f950b90C7d07E66950daedf868BD0cDcF96 CoinbaseSmartWalletValidator --verifier-url $ETHERSCAN_API
+
+// NonceTracker
+forge verify-contract --chain-id 1 --num-of-optimizations 20000 --watch --etherscan-api-key $ETHERSCAN_API_KEY --compiler-version v0.8.23 0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8 NonceTracker --verifier-url $ETHERSCAN_API
+
+// DefaultReceiver
+forge verify-contract --chain-id 1 --num-of-optimizations 20000 --watch --etherscan-api-key $ETHERSCAN_API_KEY --compiler-version v0.8.23 0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9 DefaultReceiver --verifier-url $ETHERSCAN_API
+
+// EIP7702Proxy
+forge verify-contract --chain-id 1 --num-of-optimizations 20000 --watch --constructor-args $(cast abi-encode "constructor(address,address)" "0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8" "0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9") --etherscan-api-key $ETHERSCAN_API_KEY --compiler-version v0.8.23 0x7702cb554e6bFb442cb743A7dF23154544a7176C EIP7702Proxy --verifier-url $ETHERSCAN_API 
+
+
+Deploy final EIP7702Proxy on Base =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+
+forge script Deploy --account spmdeployer --sender $SPM_DEPLOYER --rpc-url $BASE_RPC --verify --verifier-url $BASESCAN_API --etherscan-api-key $BASESCAN_API_KEY --broadcast -vvvv
+
+BASE verifications =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+
+// CoinbaseSmartWalletValidator
+forge verify-contract --chain-id 1 --num-of-optimizations 20000 --watch --constructor-args $(cast abi-encode "constructor(address)" "0x000100abaad02f1cfC8Bbe32bD5a564817339E72") --etherscan-api-key $BASESCAN_API_KEY --compiler-version v0.8.23 0x79A33f950b90C7d07E66950daedf868BD0cDcF96 CoinbaseSmartWalletValidator --verifier-url $BASESCAN_API
+
+// NonceTracker
+forge verify-contract --chain-id 1 --num-of-optimizations 20000 --watch --etherscan-api-key $BASESCAN_API_KEY --compiler-version v0.8.23 0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8 NonceTracker --verifier-url $BASESCAN_API
+
+// DefaultReceiver
+forge verify-contract --chain-id 1 --num-of-optimizations 20000 --watch --etherscan-api-key $BASESCAN_API_KEY --compiler-version v0.8.23 0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9 DefaultReceiver --verifier-url $BASESCAN_API
