@@ -5,6 +5,180 @@ ADDRESSES:
 0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9 DefaultReceiver
 0x7702cb554e6bFb442cb743A7dF23154544a7176C EIP7702Proxy
 
+
+SANDBOX DEPLOYMENT =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+forge script Deploy --account spmdeployer --sender $SPM_DEPLOYER --rpc-url $SANDBOX_RPC --etherscan-api-key $BASESCAN_API_KEY --verify --verifier blockscout --verifier-url $SANDBOX_API --broadcast -vvvv
+
+Bridge native token to L3 first:
+cast send \
+    --account spmdeployer \
+    --rpc-url $BASE_SEPOLIA_RPC \
+    --value 0.1ether \
+    0xecef3a7f238b55d090aa7054483509ac1076e8b6
+
+sandbox verifications:
+
+forge verify-contract \
+    --chain-id 8453200058 \
+    --num-of-optimizations 20000 \
+    --watch \
+    --constructor-args $(cast abi-encode "constructor(address)" "0x000100abaad02f1cfC8Bbe32bD5a564817339E72") \
+    --compiler-version v0.8.23 \
+    --verifier blockscout \
+    --verifier-url "${SANDBOX_API}?" \
+    0x79A33f950b90C7d07E66950daedf868BD0cDcF96 \
+    CoinbaseSmartWalletValidator
+
+forge verify-contract \
+    --chain-id 8453200058 \
+    --num-of-optimizations 20000 \
+    --watch \
+    --compiler-version v0.8.23 \
+    --verifier blockscout \
+    --verifier-url "${SANDBOX_API}?" \
+    0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8 \
+   NonceTracker 
+
+   forge verify-contract \
+    --chain-id 8453200058 \
+    --num-of-optimizations 20000 \
+    --watch \
+    --compiler-version v0.8.23 \
+    --verifier blockscout \
+    --verifier-url "${SANDBOX_API}?" \
+    0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9 \
+   DefaultReceiver 
+
+   forge verify-contract \
+    --chain-id 8453200058 \
+    --num-of-optimizations 20000 \
+    --watch \
+    --constructor-args $(cast abi-encode "constructor(address,address)" "0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8" "0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9") \
+    --compiler-version v0.8.23 \
+    --verifier blockscout \
+    --verifier-url "${SANDBOX_API}?" \
+    0x7702cb554e6bFb442cb743A7dF23154544a7176C \
+   EIP7702Proxy 
+
+METACADE verifications =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+forge verify-contract \
+    --chain-id 845300014 \
+    --num-of-optimizations 20000 \
+    --watch \
+    --constructor-args $(cast abi-encode "constructor(address)" "0x000100abaad02f1cfC8Bbe32bD5a564817339E72") \
+    --compiler-version v0.8.23 \
+    --verifier blockscout \
+    --verifier-url "${METACADE_API}?" \
+    0x79A33f950b90C7d07E66950daedf868BD0cDcF96 \
+    CoinbaseSmartWalletValidator
+
+forge verify-contract \
+    --chain-id 845300014 \
+    --num-of-optimizations 20000 \
+    --watch \
+    --compiler-version v0.8.23 \
+    --verifier blockscout \
+    --verifier-url "${METACADE_API}?" \
+    0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8 \
+   NonceTracker 
+
+   forge verify-contract \
+    --chain-id 845300014 \
+    --num-of-optimizations 20000 \
+    --watch \
+    --compiler-version v0.8.23 \
+    --verifier blockscout \
+    --verifier-url "${METACADE_API}?" \
+    0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9 \
+   DefaultReceiver 
+
+   forge verify-contract \
+    --chain-id 845300014 \
+    --num-of-optimizations 20000 \
+    --watch \
+    --constructor-args $(cast abi-encode "constructor(address,address)" "0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8" "0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9") \
+    --compiler-version v0.8.23 \
+    --verifier blockscout \
+    --verifier-url "${METACADE_API}?" \
+    0x7702cb554e6bFb442cb743A7dF23154544a7176C \
+   EIP7702Proxy 
+
+
+METACADE bridging =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+// 1) Approve the optimism portal contract to spend on the ERC20 you are targeting 
+// cast send <TOKEN_ADDRESS> "approve(address,uint256)" <SPENDER_ADDRESS> <AMOUNT> --rpc-url <RPC_URL> –-account <ACCOUNT NAME>
+cast send \
+    --account spmdeployer \
+    --rpc-url $BASE_RPC \
+    0xc48823EC67720a04A9DFD8c7d109b2C3D6622094 \
+    "approve(address,uint256)" \
+    0x69ccac929db7eb64826a314aecf78eb2d2683543 \
+    70000000000000000000
+
+
+// 2) Amount to deposit to optimism portal. Note min gas limit should be: 100000
+// cast send <OP_PORTAL_ADDRESS> "depositERC20Transaction(address,uint256,uint256,uint64,bool,bytes)" <RECIEVER ADDRESS > <MINT AMOUNT>  <VALUE> <GAS LIMIT> <IS CREATION> <BYTES>  --rpc-url <RPC_URL>  --account <ACCOUNT NAME>
+cast send \
+    --account spmdeployer \
+    --rpc-url $BASE_RPC \
+    0x69ccac929db7eb64826a314aecf78eb2d2683543 \
+    "depositERC20Transaction(address,uint256,uint256,uint64,bool,bytes)" \
+    $SPM_DEPLOYER \
+    70000000000000000000 \
+    0 \
+    100000 \
+    false \
+    0x
+
+METACADE deployment =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+forge script Deploy --account spmdeployer --sender $SPM_DEPLOYER --rpc-url $METACADE_RPC --etherscan-api-key $BASESCAN_API_KEY --verify --verifier blockscout --verifier-url $METACADE_API --broadcast -vvvv
+
+LORDCHAIN deployment =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+
+forge script Deploy --account spmdeployer --sender $SPM_DEPLOYER --rpc-url $LORDCHAIN_RPC --etherscan-api-key $BASESCAN_API_KEY --verify --verifier blockscout --verifier-url $LORDCHAIN_API --broadcast -vvvv
+ 
+forge verify-contract \
+    --chain-id 84530008 \
+    --num-of-optimizations 20000 \
+    --watch \
+    --constructor-args $(cast abi-encode "constructor(address)" "0x000100abaad02f1cfC8Bbe32bD5a564817339E72") \
+    --compiler-version v0.8.23 \
+    --verifier blockscout \
+    --verifier-url "${LORDCHAIN_API}?" \
+    0x79A33f950b90C7d07E66950daedf868BD0cDcF96 \
+    CoinbaseSmartWalletValidator
+
+forge verify-contract \
+    --chain-id 84530008 \
+    --num-of-optimizations 20000 \
+    --watch \
+    --compiler-version v0.8.23 \
+    --verifier blockscout \
+    --verifier-url "${LORDCHAIN_API}?" \
+    0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8 \
+   NonceTracker 
+
+   forge verify-contract \
+    --chain-id 84530008 \
+    --num-of-optimizations 20000 \
+    --watch \
+    --compiler-version v0.8.23 \
+    --verifier blockscout \
+    --verifier-url "${LORDCHAIN_API}?" \
+    0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9 \
+   DefaultReceiver 
+
+   forge verify-contract \
+    --chain-id 84530008 \
+    --num-of-optimizations 20000 \
+    --watch \
+    --constructor-args $(cast abi-encode "constructor(address,address)" "0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8" "0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9") \
+    --compiler-version v0.8.23 \
+    --verifier blockscout \
+    --verifier-url "${LORDCHAIN_API}?" \
+    0x7702cb554e6bFb442cb743A7dF23154544a7176C \
+   EIP7702Proxy 
+
 ARBITRUM SEPOLIA verifications =======================================================================================================================================================================================================================================================================================================================================================================================================================================================================
 // CoinbaseSmartWalletValidator
 forge verify-contract --chain-id 421614 --num-of-optimizations 20000 --watch --constructor-args $(cast abi-encode "constructor(address)" "0x000100abaad02f1cfC8Bbe32bD5a564817339E72") --etherscan-api-key $ARBISCAN_API_KEY --compiler-version v0.8.23 0x79A33f950b90C7d07E66950daedf868BD0cDcF96 CoinbaseSmartWalletValidator --verifier-url $ARBITRUM_SEPOLIA_ETHERSCAN_API
