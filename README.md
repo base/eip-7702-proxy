@@ -30,10 +30,10 @@ The EIP-7702 Proxy provides a secure way to upgrade EOAs to smart contract walle
 
 | Contract | Address |
 |----------|---------|
-| EIP7702Proxy: `0x7702cb554e6bFb442cb743A7dF23154544a7176C`|
-| NonceTracker: `0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8`|
-| DefaultReceiver: `0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9`|
-| CoinbaseSmartWalletValidator: `0x79A33f950b90C7d07E66950daedf868BD0cDcF96`|
+| EIP7702Proxy: [`0x7702cb554e6bFb442cb743A7dF23154544a7176C`](https://basescan.org/address/0x7702cb554e6bFb442cb743A7dF23154544a7176C#code)|
+| NonceTracker: [`0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8`](https://basescan.org/address/0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8#code)|
+| DefaultReceiver: [`0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9`](https://basescan.org/address/0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9#code)|
+| CoinbaseSmartWalletValidator: [`0x79A33f950b90C7d07E66950daedf868BD0cDcF96`](https://basescan.org/address/0x79A33f950b90C7d07E66950daedf868BD0cDcF96#code)|
 
 ## Core Components
 
