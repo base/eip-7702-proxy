@@ -35,6 +35,89 @@ The EIP-7702 Proxy provides a secure way to upgrade EOAs to smart contract walle
 | DefaultReceiver | [`0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9`](https://basescan.org/address/0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9#code)|
 | CoinbaseSmartWalletValidator |  [`0x79A33f950b90C7d07E66950daedf868BD0cDcF96`](https://basescan.org/address/0x79A33f950b90C7d07E66950daedf868BD0cDcF96#code)|
 
+## Deploying
+
+All contracts are deployed deterministically via CREATE2, so they share the same addresses on every chain (see [Deployment Addresses](#deployment-addresses) above). Deployment is handled by [`script/Deploy.s.sol`](script/Deploy.s.sol), which deploys the full cluster and asserts that each resulting address matches its canonical value. A misconfigured deploy therefore reverts instead of silently landing at the wrong address.
+
+### How determinism works
+
+Deployments go through the canonical CREATE2 factory at `0x4e59b44847b379578588920cA78FbF26c0B4956C`, which is already present on most chains. A CREATE2 address depends only on the factory, the salt, and the contract init code (creation bytecode plus constructor args), and never on the deployer's account. The salts are fixed in `Deploy.s.sol`:
+
+| Salt | Value | Used for |
+|------|-------|----------|
+| `DEPENDENCY_DEPLOYMENT_SALT` | `7702` | `CoinbaseSmartWalletValidator`, `NonceTracker`, `DefaultReceiver` |
+| `PROXY_DEPLOYMENT_SALT` | `23662924` | `EIP7702Proxy` (gives the `0x7702cb...` vanity prefix) |
+
+Because the address is a function of the init code, the compiler settings must match exactly or the address changes. They are pinned in `foundry.toml` (`via_ir = true`, `optimizer = true`, `optimizer_runs = 20000`, solc `0.8.23`). Do not override them when deploying.
+
+### Deploy to a new chain
+
+1. Confirm the CREATE2 factory exists on the target chain:
+   ```bash
+   cast code 0x4e59b44847b379578588920cA78FbF26c0B4956C --rpc-url <RPC_URL>
+   ```
+   If this returns `0x`, deploy [Arachnid's deterministic deployment proxy](https://github.com/Arachnid/deterministic-deployment-proxy) first, then continue.
+2. Fund the deployer account on the target chain. The full cluster is roughly 1.6M gas total.
+3. Optionally simulate first by running the command below without `--broadcast`.
+4. Deploy and broadcast:
+   ```bash
+   forge script Deploy \
+     --account <your-keystore-account> \
+     --sender <deployer-address> \
+     --rpc-url <RPC_URL> \
+     --broadcast -vvvv
+   ```
+
+The asserts in the script guarantee the contracts either land at the canonical addresses or the transaction reverts.
+
+### Verifying
+
+For Etherscan-family explorers:
+
+```bash
+# CoinbaseSmartWalletValidator (constructor arg: CoinbaseSmartWallet implementation)
+forge verify-contract --watch --chain-id <CHAIN_ID> \
+  --constructor-args $(cast abi-encode "constructor(address)" 0x000100abaad02f1cfC8Bbe32bD5a564817339E72) \
+  --etherscan-api-key <API_KEY> \
+  0x79A33f950b90C7d07E66950daedf868BD0cDcF96 \
+  src/validators/CoinbaseSmartWalletValidator.sol:CoinbaseSmartWalletValidator
+
+# NonceTracker (no constructor args)
+forge verify-contract --watch --chain-id <CHAIN_ID> --etherscan-api-key <API_KEY> \
+  0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8 src/NonceTracker.sol:NonceTracker
+
+# DefaultReceiver (no constructor args)
+forge verify-contract --watch --chain-id <CHAIN_ID> --etherscan-api-key <API_KEY> \
+  0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9 src/DefaultReceiver.sol:DefaultReceiver
+
+# EIP7702Proxy (constructor args: NonceTracker, DefaultReceiver)
+forge verify-contract --watch --chain-id <CHAIN_ID> \
+  --constructor-args $(cast abi-encode "constructor(address,address)" 0xD0Ff13c28679FDd75Bc09c0a430a0089bf8b95a8 0x2a8010A9D71D2a5AEA19D040F8b4797789A194a9) \
+  --etherscan-api-key <API_KEY> \
+  0x7702cb554e6bFb442cb743A7dF23154544a7176C src/EIP7702Proxy.sol:EIP7702Proxy
+```
+
+For Blockscout explorers, add `--verifier blockscout --verifier-url https://<explorer-host>/api?` to each command (no API key required).
+
+### Deploying without this repo
+
+Because CREATE2 ignores the sender, anyone can reproduce the same addresses on a new chain by replaying the original deployment calldata against the factory, with no source checkout or compiler setup required. Each original deployment is a transaction sent to `0x4e59b44847b379578588920cA78FbF26c0B4956C` whose calldata is `salt (32 bytes) ++ init code`. Copy that calldata from a chain where the contracts already exist and resend it:
+
+```bash
+# Read the calldata from an existing deployment transaction
+cast tx <DEPLOY_TX_HASH> input --rpc-url <SOURCE_RPC>
+
+# Replay it on the new chain (deploy the dependencies before the proxy)
+cast send 0x4e59b44847b379578588920cA78FbF26c0B4956C <CALLDATA> \
+  --rpc-url <NEW_RPC> --account <your-keystore-account>
+```
+
+This reuses the exact init code byte-for-byte, so it produces identical addresses and avoids compiler-setting mismatches entirely.
+
+### Notes
+
+- `CoinbaseSmartWalletValidator` takes the Coinbase Smart Wallet implementation (`0x000100abaad02f1cfC8Bbe32bD5a564817339E72`) as a constructor argument. This is baked into its init code and does not need to exist for deployment to succeed, but the validator is only usable on chains where that implementation is also deployed.
+
 ## Core Components
 
 ### EIP7702Proxy
