@@ -137,7 +137,7 @@ This reuses the exact init code byte-for-byte, so it produces identical addresse
 - Reverts invalid state transitions
 
 ### DefaultReceiver
-- Inherits from Solady's `Receiver`
+- Inherits from Solady `Receiver`
 - Provides a default implementation for token compatibility
 
 ## Usage
